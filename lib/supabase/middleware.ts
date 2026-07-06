@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import type { UserRole } from "@/types/database";
+import { getHomeRouteForRole } from "@/lib/auth/roles";
 import {
   ADMIN_ROUTES_PREFIX,
   HOST_ROUTES_PREFIX,
@@ -39,12 +40,17 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   const isAuthRoute = pathname.startsWith("/login");
+  const isAuthCallback = pathname.startsWith("/auth/callback");
   const isPublicInvitation = pathname.startsWith("/e/");
   const isAdminRoute = pathname.startsWith(ADMIN_ROUTES_PREFIX);
   const isHostRoute = pathname.startsWith(HOST_ROUTES_PREFIX);
   const isScannerRoute = pathname === SCANNER_ROUTE;
   const isProtectedRoute =
     isAdminRoute || isHostRoute || isScannerRoute;
+
+  if (isAuthCallback) {
+    return supabaseResponse;
+  }
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
@@ -54,8 +60,20 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && isAuthRoute) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const role = (profile as { role: UserRole } | null)?.role;
+    const redirectParam = request.nextUrl.searchParams.get("redirect");
     const url = request.nextUrl.clone();
-    url.pathname = "/admin";
+    url.pathname =
+      redirectParam && redirectParam.startsWith("/")
+        ? redirectParam
+        : getHomeRouteForRole(role);
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
