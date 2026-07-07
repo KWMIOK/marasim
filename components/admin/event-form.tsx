@@ -1,54 +1,170 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  createEvent,
-  importGuestsForEvent,
-} from "@/lib/actions/events";
+import { createEvent, importGuestsForEvent } from "@/lib/actions/events";
 import { defaultContentSlots } from "@/lib/events/defaults";
+import {
+  DEFAULT_FEATURE_TOGGLES,
+  EVENT_TYPE_OPTIONS,
+  LANGUAGE_OPTIONS,
+  defaultEventTitle,
+  isCoupleEventType,
+} from "@/lib/events/constants";
 import { parseGuestFile } from "@/lib/guests/parse-roster";
 import { slugify } from "@/lib/utils/urls";
+import { CatalogPicker } from "@/components/admin/catalog-picker";
 import { ContentSlotsEditor } from "@/components/admin/content-slots-editor";
+import { RangeField } from "@/components/admin/range-field";
+import { SwitchField } from "@/components/admin/switch-field";
+import { VenueMapPicker } from "@/components/admin/venue-map-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type {
+  CeremonyEventType,
+  EventCatalogs,
+  EventFeatureToggles,
+  InvitationLanguage,
+} from "@/types/events";
 import type { ContentSlot, Profile, TemplateType } from "@/types/database";
 
 type HostOption = Pick<Profile, "id" | "full_name" | "role">;
 
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white p-6">
+      <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
+      {description ? <p className="mt-1 text-sm text-zinc-500">{description}</p> : null}
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
 export function EventForm({
   hosts,
   currentUserId,
+  catalogs,
 }: {
   hosts: HostOption[];
   currentUserId: string;
+  catalogs: EventCatalogs;
 }) {
   const router = useRouter();
 
+  const [eventType, setEventType] = useState<CeremonyEventType>("wedding");
+  const [groomName, setGroomName] = useState("");
+  const [brideName, setBrideName] = useState("");
+  const [honoreeName, setHonoreeName] = useState("");
   const [title, setTitle] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [urlText, setUrlText] = useState("");
   const [slug, setSlug] = useState("");
   const [templateType, setTemplateType] = useState<TemplateType>("standard");
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [hostId, setHostId] = useState(currentUserId);
-  const [eventDate, setEventDate] = useState("");
-  const [locationName, setLocationName] = useState("");
+  const [startDatetime, setStartDatetime] = useState("");
+  const [endDatetime, setEndDatetime] = useState("");
+  const [venue, setVenue] = useState("");
   const [mapsUrl, setMapsUrl] = useState("");
-  const [countdownTarget, setCountdownTarget] = useState("");
+  const [mapsLat, setMapsLat] = useState<number | null>(null);
+  const [mapsLng, setMapsLng] = useState<number | null>(null);
+  const [customMessage, setCustomMessage] = useState("");
+  const [heroImageUrl, setHeroImageUrl] = useState("");
+  const [animatedTemplateId, setAnimatedTemplateId] = useState<string | null>(
+    catalogs.animatedTemplates[0]?.id ?? null
+  );
+  const [themeId, setThemeId] = useState<string | null>(catalogs.themes[0]?.id ?? null);
+  const [invitationLanguage, setInvitationLanguage] = useState<InvitationLanguage>("ar");
+  const [fontId, setFontId] = useState<string | null>(null);
+  const [fontColorId, setFontColorId] = useState<string | null>(
+    catalogs.fontColors[0]?.id ?? null
+  );
+  const [nameSizePx, setNameSizePx] = useState(48);
+  const [letterSpacingEm, setLetterSpacingEm] = useState(0.04);
+  const [localeDefault, setLocaleDefault] = useState<InvitationLanguage>("ar");
   const [primaryColor, setPrimaryColor] = useState("#1a1a2e");
   const [secondaryColor, setSecondaryColor] = useState("#e94560");
   const [contentSlots, setContentSlots] = useState<ContentSlot[]>(
     defaultContentSlots("standard")
   );
+  const [toggles, setToggles] = useState<EventFeatureToggles>({
+    ...DEFAULT_FEATURE_TOGGLES,
+  });
+  const [dressCodeText, setDressCodeText] = useState("");
+  const [importantNotesText, setImportantNotesText] = useState("");
+  const [backgroundMusicUrl, setBackgroundMusicUrl] = useState("");
   const [guestFile, setGuestFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const autoSlug = useMemo(() => slugify(title), [title]);
+  const coupleEvent = isCoupleEventType(eventType);
+  const autoTitle = useMemo(
+    () => defaultEventTitle(eventType, groomName, brideName, honoreeName),
+    [eventType, groomName, brideName, honoreeName]
+  );
+  const autoSlug = useMemo(() => slugify(urlText || title || autoTitle), [urlText, title, autoTitle]);
+
+  const filteredFonts = useMemo(
+    () =>
+      catalogs.fonts.filter(
+        (font) => font.language === invitationLanguage || font.language === "both"
+      ),
+    [catalogs.fonts, invitationLanguage]
+  );
+
+  useEffect(() => {
+    if (!titleTouched) setTitle(autoTitle);
+  }, [autoTitle, titleTouched]);
+
+  useEffect(() => {
+    if (filteredFonts.length === 0) {
+      setFontId(null);
+      return;
+    }
+    if (!fontId || !filteredFonts.some((f) => f.id === fontId)) {
+      setFontId(filteredFonts[0].id);
+    }
+  }, [filteredFonts, fontId]);
+
+  useEffect(() => {
+    const theme = catalogs.themes.find((t) => t.id === themeId);
+    if (theme) {
+      setPrimaryColor(theme.primary_color);
+      setSecondaryColor(theme.secondary_color);
+    }
+  }, [themeId, catalogs.themes]);
+
+  const handleMapsChange = useCallback(
+    (data: { venue: string; mapsUrl: string; lat: number | null; lng: number | null }) => {
+      setVenue(data.venue);
+      setMapsUrl(data.mapsUrl);
+      setMapsLat(data.lat);
+      setMapsLng(data.lng);
+    },
+    []
+  );
+
+  function updateToggle(key: keyof EventFeatureToggles, value: boolean) {
+    setToggles((prev) => ({ ...prev, [key]: value }));
+  }
 
   function handleTemplateChange(value: TemplateType) {
     setTemplateType(value);
     setContentSlots(defaultContentSlots(value));
+  }
+
+  function generateUrlSlug() {
+    setSlug(slugify(urlText || title));
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -62,19 +178,57 @@ export function EventForm({
       return;
     }
 
+    if (coupleEvent && !groomName.trim() && !brideName.trim()) {
+      setError("Please enter at least a groom or bride name.");
+      setLoading(false);
+      return;
+    }
+
+    if (!coupleEvent && !honoreeName.trim()) {
+      setError("Please enter the honoree name.");
+      setLoading(false);
+      return;
+    }
+
     const result = await createEvent({
       title: title.trim(),
       slug: slug.trim() || autoSlug,
+      event_type: eventType,
+      groom_name: coupleEvent ? groomName.trim() : undefined,
+      bride_name: coupleEvent ? brideName.trim() : undefined,
+      honoree_name: !coupleEvent ? honoreeName.trim() : undefined,
       template_type: templateType,
       status,
       host_id: hostId,
-      event_date: eventDate || undefined,
-      location_name: locationName,
+      start_datetime: startDatetime || undefined,
+      end_datetime: endDatetime || undefined,
+      venue,
       maps_url: mapsUrl,
-      countdown_target: countdownTarget || eventDate || undefined,
+      maps_lat: mapsLat,
+      maps_lng: mapsLng,
+      custom_message: customMessage,
+      hero_image_url: heroImageUrl || undefined,
       primary_color: primaryColor,
       secondary_color: secondaryColor,
       content_slots: contentSlots,
+      settings: {
+        animated_template_id: animatedTemplateId,
+        theme_id: themeId,
+        invitation_language: invitationLanguage,
+        font_id: fontId,
+        font_color_id: fontColorId,
+        name_size_px: nameSizePx,
+        letter_spacing_em: letterSpacingEm,
+        locale_default: localeDefault,
+        custom_message: customMessage,
+        hero_image_url: heroImageUrl || undefined,
+        background_music_url: toggles.background_music ? backgroundMusicUrl : undefined,
+        dress_code_text: toggles.dress_code ? dressCodeText : undefined,
+        important_notes_text: toggles.important_notes ? importantNotesText : undefined,
+        maps_lat: mapsLat,
+        maps_lng: mapsLng,
+        toggles,
+      },
     });
 
     if (!result.success) {
@@ -88,7 +242,6 @@ export function EventForm({
         const buffer = await guestFile.arrayBuffer();
         const guests = parseGuestFile(buffer, guestFile.name);
         const importResult = await importGuestsForEvent(result.eventId, guests);
-
         if (!importResult.success) {
           setError(`Event created, but guest import failed: ${importResult.error}`);
           setLoading(false);
@@ -110,42 +263,338 @@ export function EventForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-900">Basic details</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Section title="Event type & names" description="Fields change based on ceremony type.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label htmlFor="eventType">Event type</Label>
+            <Select
+              id="eventType"
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value as CeremonyEventType)}
+              className="mt-1"
+            >
+              {EVENT_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {coupleEvent ? (
+            <>
+              <div>
+                <Label htmlFor="groom">Groom name</Label>
+                <Input
+                  id="groom"
+                  value={groomName}
+                  onChange={(e) => setGroomName(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="bride">Bride name</Label>
+                <Input
+                  id="bride"
+                  value={brideName}
+                  onChange={(e) => setBrideName(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="sm:col-span-2">
+              <Label htmlFor="honoree">Name</Label>
+              <Input
+                id="honoree"
+                value={honoreeName}
+                onChange={(e) => setHonoreeName(e.target.value)}
+                placeholder="Birthday or graduate name"
+                className="mt-1"
+              />
+            </div>
+          )}
+
           <div className="sm:col-span-2">
             <Label htmlFor="title">Event title *</Label>
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ahmed & Sara Wedding"
+              onChange={(e) => {
+                setTitleTouched(true);
+                setTitle(e.target.value);
+              }}
               className="mt-1"
               required
             />
           </div>
+        </div>
+      </Section>
+
+      <Section title="Custom invitation URL">
+        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
           <div>
-            <Label htmlFor="slug">URL slug</Label>
+            <Label htmlFor="urlText">URL text</Label>
+            <Input
+              id="urlText"
+              value={urlText}
+              onChange={(e) => setUrlText(e.target.value)}
+              placeholder="ahmed-and-sara-wedding"
+              className="mt-1"
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={generateUrlSlug}
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+            >
+              Generate URL
+            </button>
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="slug">Final slug</Label>
             <Input
               id="slug"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              placeholder={autoSlug || "ahmed-sara-wedding"}
+              placeholder={autoSlug}
               className="mt-1"
             />
             <p className="mt-1 text-xs text-zinc-500">
-              Invitation URL: /e/{slug.trim() || autoSlug || "your-slug"}/[guest-token]
+              Preview: /e/{slug.trim() || autoSlug || "your-slug"}/[guest-token]
             </p>
           </div>
+        </div>
+      </Section>
+
+      <Section title="Schedule & venue">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="host">Host / client</Label>
+            <Label htmlFor="start">Start date & time</Label>
+            <Input
+              id="start"
+              type="datetime-local"
+              value={startDatetime}
+              onChange={(e) => setStartDatetime(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="end">End date & time</Label>
+            <Input
+              id="end"
+              type="datetime-local"
+              value={endDatetime}
+              onChange={(e) => setEndDatetime(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <VenueMapPicker
+              venue={venue}
+              mapsUrl={mapsUrl}
+              mapsLat={mapsLat}
+              mapsLng={mapsLng}
+              onVenueChange={setVenue}
+              onMapsChange={handleMapsChange}
+            />
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Message & media">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="message">Custom message</Label>
+            <Textarea
+              id="message"
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              rows={4}
+              className="mt-1"
+              placeholder="Your presence would mean the world to us…"
+            />
+          </div>
+          <div>
+            <Label htmlFor="heroImage">Image (optional URL)</Label>
+            <Input
+              id="heroImage"
+              value={heroImageUrl}
+              onChange={(e) => setHeroImageUrl(e.target.value)}
+              placeholder="https://..."
+              className="mt-1"
+            />
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        title="Animated template"
+        description="Templates are managed by admin and shown as selectable previews."
+      >
+        <CatalogPicker
+          label="Animated template"
+          items={catalogs.animatedTemplates}
+          value={animatedTemplateId}
+          onChange={setAnimatedTemplateId}
+          renderPreview={(item, selected) => (
+            <div>
+              <div
+                className={`mb-2 flex h-20 items-center justify-center rounded-lg bg-zinc-900 text-sm text-white ${
+                  selected ? "animate-pulse" : ""
+                }`}
+              >
+                {item.animation_key}
+              </div>
+              <p className="text-sm font-medium">{item.name}</p>
+              <p className="text-xs text-zinc-500">{item.description}</p>
+            </div>
+          )}
+        />
+      </Section>
+
+      <Section title="Invitation theme">
+        <CatalogPicker
+          label="Theme"
+          items={catalogs.themes}
+          value={themeId}
+          onChange={setThemeId}
+        />
+      </Section>
+
+      <Section title="Typography & styling">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Invitation language</Label>
             <Select
-              id="host"
-              value={hostId}
-              onChange={(e) => setHostId(e.target.value)}
+              value={invitationLanguage}
+              onChange={(e) => setInvitationLanguage(e.target.value as InvitationLanguage)}
               className="mt-1"
             >
+              {LANGUAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label>Default language for guests</Label>
+            <Select
+              value={localeDefault}
+              onChange={(e) => setLocaleDefault(e.target.value as InvitationLanguage)}
+              className="mt-1"
+            >
+              {LANGUAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <CatalogPicker
+            label="Font"
+            items={filteredFonts}
+            value={fontId}
+            onChange={setFontId}
+            renderPreview={(item) => (
+              <div>
+                <p className="text-xl" style={{ fontFamily: item.font_family }}>
+                  {invitationLanguage === "ar" ? "محمد & سارة" : "Mohammed & Sara"}
+                </p>
+                <p className="mt-1 text-sm font-medium">{item.name}</p>
+              </div>
+            )}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <RangeField
+            label="Name size"
+            value={nameSizePx}
+            min={36}
+            max={72}
+            step={1}
+            unit="px"
+            onChange={setNameSizePx}
+          />
+          <RangeField
+            label="Letter spacing"
+            value={letterSpacingEm}
+            min={-0.02}
+            max={0.2}
+            step={0.01}
+            onChange={setLetterSpacingEm}
+            formatValue={(v) => `${v.toFixed(2)}em`}
+          />
+        </div>
+
+        <div className="mt-4">
+          <CatalogPicker
+            label="Font color"
+            items={catalogs.fontColors}
+            value={fontColorId}
+            onChange={setFontColorId}
+            renderPreview={(item) => (
+              <div className="flex items-center gap-3">
+                <span
+                  className="inline-block h-8 w-8 rounded-full border"
+                  style={{ backgroundColor: item.color_hex }}
+                />
+                <span className="text-sm font-medium">{item.name}</span>
+              </div>
+            )}
+          />
+        </div>
+      </Section>
+
+      <Section title="Feature toggles">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <SwitchField label="Confetti effect" checked={toggles.confetti} onChange={(v) => updateToggle("confetti", v)} />
+          <SwitchField label="Background music" checked={toggles.background_music} onChange={(v) => updateToggle("background_music", v)} />
+          <SwitchField label="Show language selector to guests" checked={toggles.show_language_selector} onChange={(v) => updateToggle("show_language_selector", v)} />
+          <SwitchField label="Live photo album" checked={toggles.live_photo_album} onChange={(v) => updateToggle("live_photo_album", v)} />
+          <SwitchField label="Guest comments" checked={toggles.guest_comments} onChange={(v) => updateToggle("guest_comments", v)} />
+          <SwitchField label="Guest book" checked={toggles.guest_book} onChange={(v) => updateToggle("guest_book", v)} />
+          <SwitchField label="RSVP" checked={toggles.rsvp} onChange={(v) => updateToggle("rsvp", v)} />
+          <SwitchField label="Dress code" checked={toggles.dress_code} onChange={(v) => updateToggle("dress_code", v)} />
+          <SwitchField label="Important notes" checked={toggles.important_notes} onChange={(v) => updateToggle("important_notes", v)} />
+          <SwitchField label="Invitation protection" checked={toggles.invitation_protection} onChange={(v) => updateToggle("invitation_protection", v)} />
+          <SwitchField label="WhatsApp messages" checked={toggles.whatsapp_messages} onChange={(v) => updateToggle("whatsapp_messages", v)} />
+        </div>
+
+        {toggles.background_music ? (
+          <div className="mt-4">
+            <Label htmlFor="music">Background music URL</Label>
+            <Input id="music" value={backgroundMusicUrl} onChange={(e) => setBackgroundMusicUrl(e.target.value)} className="mt-1" />
+          </div>
+        ) : null}
+
+        {toggles.dress_code ? (
+          <div className="mt-4">
+            <Label htmlFor="dressCode">Dress code details</Label>
+            <Textarea id="dressCode" value={dressCodeText} onChange={(e) => setDressCodeText(e.target.value)} rows={2} className="mt-1" />
+          </div>
+        ) : null}
+
+        {toggles.important_notes ? (
+          <div className="mt-4">
+            <Label htmlFor="notes">Important notes</Label>
+            <Textarea id="notes" value={importantNotesText} onChange={(e) => setImportantNotesText(e.target.value)} rows={2} className="mt-1" />
+          </div>
+        ) : null}
+      </Section>
+
+      <Section title="Admin & layout">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="host">Host / client</Label>
+            <Select id="host" value={hostId} onChange={(e) => setHostId(e.target.value)} className="mt-1">
               {hosts.map((host) => (
                 <option key={host.id} value={host.id}>
                   {host.full_name ?? host.id} ({host.role})
@@ -154,153 +603,60 @@ export function EventForm({
             </Select>
           </div>
           <div>
-            <Label htmlFor="template">Template type</Label>
-            <Select
-              id="template"
-              value={templateType}
-              onChange={(e) => handleTemplateChange(e.target.value as TemplateType)}
-              className="mt-1"
-            >
+            <Label htmlFor="layout">Layout type</Label>
+            <Select id="layout" value={templateType} onChange={(e) => handleTemplateChange(e.target.value as TemplateType)} className="mt-1">
               <option value="standard">Standard</option>
               <option value="vip">VIP</option>
             </Select>
           </div>
           <div>
             <Label htmlFor="status">Status</Label>
-            <Select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as "draft" | "published")}
-              className="mt-1"
-            >
+            <Select id="status" value={status} onChange={(e) => setStatus(e.target.value as "draft" | "published")} className="mt-1">
               <option value="draft">Draft</option>
               <option value="published">Published</option>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="eventDate">Event date & time</Label>
-            <Input
-              id="eventDate"
-              type="datetime-local"
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="countdown">Countdown target</Label>
-            <Input
-              id="countdown"
-              type="datetime-local"
-              value={countdownTarget}
-              onChange={(e) => setCountdownTarget(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="location">Location name</Label>
-            <Input
-              id="location"
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              placeholder="Four Seasons Hotel Kuwait"
-              className="mt-1"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="maps">Google Maps URL</Label>
-            <Input
-              id="maps"
-              value={mapsUrl}
-              onChange={(e) => setMapsUrl(e.target.value)}
-              placeholder="https://maps.google.com/..."
-              className="mt-1"
-            />
-          </div>
         </div>
-      </section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-900">Brand colors</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="primary">Primary color</Label>
+            <Label htmlFor="primary">Primary color override</Label>
             <div className="mt-1 flex gap-2">
-              <input
-                id="primary"
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="h-10 w-12 cursor-pointer rounded border border-zinc-300"
-              />
-              <Input
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-              />
+              <input id="primary" type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-10 w-12 rounded border" />
+              <Input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
             </div>
           </div>
           <div>
-            <Label htmlFor="secondary">Secondary color</Label>
+            <Label htmlFor="secondary">Secondary color override</Label>
             <div className="mt-1 flex gap-2">
-              <input
-                id="secondary"
-                type="color"
-                value={secondaryColor}
-                onChange={(e) => setSecondaryColor(e.target.value)}
-                className="h-10 w-12 cursor-pointer rounded border border-zinc-300"
-              />
-              <Input
-                value={secondaryColor}
-                onChange={(e) => setSecondaryColor(e.target.value)}
-              />
+              <input id="secondary" type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-10 w-12 rounded border" />
+              <Input value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} />
             </div>
           </div>
         </div>
-      </section>
+      </Section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-900">Content blocks</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          Dynamic invitation content — no code changes needed per event.
+      <Section title="Advanced content blocks" description="Optional dynamic blocks for the invitation renderer.">
+        <ContentSlotsEditor slots={contentSlots} onChange={setContentSlots} />
+      </Section>
+
+      <Section title="Guest list import">
+        <p className="mb-4 text-sm text-zinc-500">
+          CSV or Excel: name, phone_number, is_vip, table_number, companion_count
         </p>
-        <div className="mt-4">
-          <ContentSlotsEditor slots={contentSlots} onChange={setContentSlots} />
-        </div>
-      </section>
+        <Input type="file" accept=".csv,.xlsx,.xls" onChange={(e) => setGuestFile(e.target.files?.[0] ?? null)} />
+        {guestFile ? <p className="mt-2 text-sm text-zinc-600">Selected: {guestFile.name}</p> : null}
+      </Section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-900">Guest list import</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          Upload CSV or Excel with columns: <code className="text-xs">name</code>,{" "}
-          <code className="text-xs">phone_number</code>, optional{" "}
-          <code className="text-xs">is_vip</code>,{" "}
-          <code className="text-xs">table_number</code>,{" "}
-          <code className="text-xs">companion_count</code>.
-        </p>
-        <Input
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          className="mt-4"
-          onChange={(e) => setGuestFile(e.target.files?.[0] ?? null)}
-        />
-        {guestFile ? (
-          <p className="mt-2 text-sm text-zinc-600">Selected: {guestFile.name}</p>
-        ) : null}
-      </section>
+      {error ? <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
 
-      {error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
-      ) : null}
-
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60"
-        >
-          {loading ? "Creating…" : "Create event"}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60"
+      >
+        {loading ? "Creating…" : "Create event"}
+      </button>
     </form>
   );
 }

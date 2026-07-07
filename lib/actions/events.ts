@@ -8,25 +8,33 @@ import { slugify } from "@/lib/utils/urls";
 import { ROUTES } from "@/lib/constants/routes";
 import type {
   ContentSlot,
-  EventSettings,
   EventStatus,
   TemplateType,
 } from "@/types/database";
+import type { CeremonyEventType, EventFormSettings } from "@/types/events";
 
 export type CreateEventInput = {
   title: string;
   slug?: string;
+  event_type: CeremonyEventType;
+  groom_name?: string;
+  bride_name?: string;
+  honoree_name?: string;
   template_type: TemplateType;
   status: EventStatus;
   host_id: string;
-  event_date?: string;
-  location_name?: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  venue?: string;
   maps_url?: string;
-  countdown_target?: string;
+  maps_lat?: number | null;
+  maps_lng?: number | null;
+  custom_message?: string;
+  hero_image_url?: string;
   primary_color: string;
   secondary_color: string;
   content_slots: ContentSlot[];
-  settings?: EventSettings;
+  settings?: EventFormSettings;
 };
 
 export type ActionResult =
@@ -77,22 +85,35 @@ export async function createEvent(input: CreateEventInput): Promise<ActionResult
     return { success: false, error: "Could not generate a valid event slug." };
   }
 
+  const startDatetime = toTimestamp(input.start_datetime);
+
   const { data, error } = await supabase
     .from("events")
     .insert({
       host_id: input.host_id,
       title: input.title.trim(),
       slug,
+      event_type: input.event_type,
+      groom_name: input.groom_name?.trim() || null,
+      bride_name: input.bride_name?.trim() || null,
+      honoree_name: input.honoree_name?.trim() || null,
       template_type: input.template_type,
       status: input.status,
-      event_date: toTimestamp(input.event_date),
-      location_name: input.location_name?.trim() || null,
+      event_date: startDatetime,
+      start_datetime: startDatetime,
+      end_datetime: toTimestamp(input.end_datetime),
+      location_name: input.venue?.trim() || null,
+      venue: input.venue?.trim() || null,
       maps_url: input.maps_url?.trim() || null,
-      countdown_target: toTimestamp(input.countdown_target ?? input.event_date),
+      maps_lat: input.maps_lat ?? null,
+      maps_lng: input.maps_lng ?? null,
+      countdown_target: startDatetime,
+      custom_message: input.custom_message?.trim() || null,
+      hero_image_url: input.hero_image_url?.trim() || null,
       primary_color: input.primary_color,
       secondary_color: input.secondary_color,
       content_slots: input.content_slots,
-      settings: input.settings ?? { locale_default: "ar" },
+      settings: input.settings ?? { locale_default: "ar", toggles: {} },
     } as never)
     .select("id")
     .single();

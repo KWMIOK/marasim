@@ -49,9 +49,17 @@ export default async function AdminEventDetailPage({
           </Link>
           <h1 className="mt-2 text-2xl font-semibold text-zinc-900">{typedEvent.title}</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            /e/{typedEvent.slug} · {typedEvent.template_type} ·{" "}
-            <span className="capitalize">{typedEvent.status}</span>
+            {typedEvent.event_type?.replace(/_/g, " ")} · /e/{typedEvent.slug} ·{" "}
+            {typedEvent.template_type} · <span className="capitalize">{typedEvent.status}</span>
           </p>
+          {(typedEvent.groom_name || typedEvent.bride_name) && (
+            <p className="mt-1 text-sm text-zinc-600">
+              {typedEvent.groom_name} {typedEvent.bride_name ? `& ${typedEvent.bride_name}` : ""}
+            </p>
+          )}
+          {typedEvent.honoree_name ? (
+            <p className="mt-1 text-sm text-zinc-600">{typedEvent.honoree_name}</p>
+          ) : null}
         </div>
         <EventStatusActions eventId={id} status={typedEvent.status} />
       </div>
@@ -76,12 +84,26 @@ export default async function AdminEventDetailPage({
           <h2 className="text-lg font-semibold text-zinc-900">Event details</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Date</dt>
-              <dd>{typedEvent.event_date ? new Date(typedEvent.event_date).toLocaleString() : "—"}</dd>
+              <dt className="text-zinc-500">Start</dt>
+              <dd>
+                {typedEvent.start_datetime
+                  ? new Date(typedEvent.start_datetime).toLocaleString()
+                  : typedEvent.event_date
+                    ? new Date(typedEvent.event_date).toLocaleString()
+                    : "—"}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Location</dt>
-              <dd>{typedEvent.location_name ?? "—"}</dd>
+              <dt className="text-zinc-500">End</dt>
+              <dd>
+                {typedEvent.end_datetime
+                  ? new Date(typedEvent.end_datetime).toLocaleString()
+                  : "—"}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-zinc-500">Venue</dt>
+              <dd>{typedEvent.venue ?? typedEvent.location_name ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-zinc-500">Colors</dt>
@@ -97,8 +119,8 @@ export default async function AdminEventDetailPage({
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Content blocks</dt>
-              <dd>{typedEvent.content_slots.length}</dd>
+              <dt className="text-zinc-500">Custom message</dt>
+              <dd className="max-w-xs truncate">{typedEvent.custom_message ?? "—"}</dd>
             </div>
           </dl>
           {typedEvent.maps_url ? (

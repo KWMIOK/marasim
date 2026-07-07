@@ -7,6 +7,7 @@ export const ROUTES = {
     newEvent: "/admin/events/new",
     event: (id: string) => `/admin/events/${id}`,
     settings: "/admin/settings",
+    catalog: "/admin/catalog",
   },
   host: {
     dashboard: (eventId: string) => `/dashboard/${eventId}`,
