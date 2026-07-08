@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
+import { useTranslation } from "@/hooks/use-locale";
 
 type CatalogItem = {
   id: string;
@@ -28,10 +29,12 @@ export function CatalogPicker<T extends CatalogItem>({
   onChange: (id: string) => void;
   renderPreview?: (item: T, selected: boolean) => ReactNode;
 }) {
+  const { t } = useTranslation();
+
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500">
-        No {label.toLowerCase()} available. Add options in Admin → Catalog.
+        {t("eventForm.noCatalog", { label: label.toLowerCase() })}
       </div>
     );
   }
@@ -68,6 +71,8 @@ export function CatalogPicker<T extends CatalogItem>({
 }
 
 function DefaultPreview({ item }: { item: CatalogItem; selected: boolean }) {
+  const { t } = useTranslation();
+
   return (
     <>
       <div
@@ -80,7 +85,7 @@ function DefaultPreview({ item }: { item: CatalogItem; selected: boolean }) {
           color: item.color_hex ? item.color_hex : undefined,
         }}
       >
-        {item.preview_url ? "Preview" : item.animation_key ?? "Option"}
+        {item.preview_url ? t("catalog.preview") : item.animation_key ?? t("catalog.option")}
       </div>
       <p className="text-sm font-medium text-zinc-900">{item.name}</p>
       {item.description ? (

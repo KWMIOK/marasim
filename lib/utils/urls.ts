@@ -1,5 +1,7 @@
-export function getGuestInvitationUrl(slug: string, token: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+import { getAppOriginFromRequest } from "@/lib/utils/app-origin";
+
+export function getGuestInvitationUrl(slug: string, token: string, request?: Request): string {
+  const base = getAppOriginFromRequest(request);
   return `${base}/e/${slug}/${token}`;
 }
 

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { updateEventStatus } from "@/lib/actions/events";
+import { useTranslation } from "@/hooks/use-locale";
 import type { EventStatus } from "@/types/database";
 
 export function EventStatusActions({
@@ -12,6 +13,7 @@ export function EventStatusActions({
   status: EventStatus;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   async function setStatus(next: EventStatus) {
     await updateEventStatus(eventId, next);
@@ -26,7 +28,7 @@ export function EventStatusActions({
           onClick={() => setStatus("published")}
           className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
         >
-          Publish event
+          {t("admin.publishEvent")}
         </button>
       ) : (
         <button
@@ -34,7 +36,7 @@ export function EventStatusActions({
           onClick={() => setStatus("draft")}
           className="rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
         >
-          Unpublish
+          {t("admin.unpublish")}
         </button>
       )}
       {status !== "archived" ? (
@@ -43,7 +45,7 @@ export function EventStatusActions({
           onClick={() => setStatus("archived")}
           className="rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
         >
-          Archive
+          {t("admin.archive")}
         </button>
       ) : null}
     </div>

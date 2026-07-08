@@ -1,0 +1,2 @@
+-- Optional seed data for local development (`npm run db:reset`)
+-- Production catalog seeds live in migrations/002_event_creator_catalogs.sql

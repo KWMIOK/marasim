@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { EventForm } from "@/components/admin/event-form";
-import { PageShell } from "@/components/shared/page-shell";
+import { NewEventPageClient } from "@/components/admin/new-event-page-client";
 import { getEventCatalogs } from "@/lib/data/catalogs";
 import { getProfile, getSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -27,22 +25,10 @@ export default async function NewEventPage() {
   ]);
 
   return (
-    <PageShell>
-      <Link href={ROUTES.admin.events} className="text-sm text-zinc-500 hover:text-zinc-700">
-        ← Back to events
-      </Link>
-      <h1 className="mt-2 text-2xl font-semibold text-zinc-900">Create event</h1>
-      <p className="mt-1 text-sm text-zinc-500">
-        Configure ceremony details, design, features, and guest list.
-      </p>
-
-      <div className="mt-8">
-        <EventForm
-          hosts={(hosts ?? [profile]) as Pick<Profile, "id" | "full_name" | "role">[]}
-          currentUserId={user.id}
-          catalogs={catalogs}
-        />
-      </div>
-    </PageShell>
+    <NewEventPageClient
+      hosts={(hosts ?? [profile]) as Pick<Profile, "id" | "full_name" | "role">[]}
+      currentUserId={user.id}
+      catalogs={catalogs}
+    />
   );
 }

@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cairo, Geist, Geist_Mono } from "next/font/google";
+import { AppProviders } from "@/components/shared/app-providers";
+import { LocaleProvider } from "@/hooks/use-locale";
+import { getServerLocale } from "@/lib/i18n/server";
+import { localeDirection } from "@/lib/i18n";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,6 +16,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const cairo = Cairo({
+  variable: "--font-arabic",
+  subsets: ["arabic", "latin"],
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Marasim",
@@ -20,17 +29,26 @@ export const metadata: Metadata = {
   description: "Digital invitation platform for events, RSVPs, and QR check-in",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getServerLocale();
+  const dir = localeDirection(locale);
+
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang={locale}
+      dir={dir}
+      className={`${geistSans.variable} ${geistMono.variable} ${cairo.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <LocaleProvider defaultLocale={locale}>
+          <AppProviders>{children}</AppProviders>
+        </LocaleProvider>
+      </body>
     </html>
   );
 }

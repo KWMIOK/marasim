@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { importGuestsForEvent } from "@/lib/actions/events";
 import { parseGuestFile } from "@/lib/guests/parse-roster";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "@/hooks/use-locale";
 
 export function GuestImportPanel({ eventId }: { eventId: string }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,12 +29,12 @@ export function GuestImportPanel({ eventId }: { eventId: string }) {
       if (!result.success) {
         setError(result.error);
       } else {
-        setSuccess(`Imported ${result.imported} guests.`);
+        setSuccess(t("guestImport.importedGuests", { count: result.imported }));
         setFile(null);
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed.");
+      setError(err instanceof Error ? err.message : t("guestImport.importFailed"));
     } finally {
       setLoading(false);
     }
@@ -40,10 +42,8 @@ export function GuestImportPanel({ eventId }: { eventId: string }) {
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-zinc-900">Import guests</h2>
-      <p className="mt-1 text-sm text-zinc-500">
-        CSV or Excel with name, phone_number, is_vip, table_number, companion_count.
-      </p>
+      <h2 className="text-lg font-semibold text-zinc-900">{t("admin.importGuests")}</h2>
+      <p className="mt-1 text-sm text-zinc-500">{t("eventForm.guestImportDesc")}</p>
       <Input
         type="file"
         accept=".csv,.xlsx,.xls"
@@ -58,7 +58,7 @@ export function GuestImportPanel({ eventId }: { eventId: string }) {
         disabled={!file || loading}
         className="mt-4 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
       >
-        {loading ? "Importing…" : "Import file"}
+        {loading ? t("guestImport.importing") : t("guestImport.importFile")}
       </button>
     </div>
   );

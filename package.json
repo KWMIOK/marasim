@@ -6,7 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:link": "supabase link --project-ref wjhprjfvyyesygftoqhh",
+    "db:push": "supabase db push",
+    "db:pull": "supabase db pull",
+    "db:reset": "supabase db reset",
+    "db:status": "supabase migration list",
+    "db:new": "supabase migration new",
+    "db:repair": "supabase migration repair --status applied",
+    "auth:sync-urls": "supabase config push --yes"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.1",
@@ -33,6 +41,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "supabase": "^2.109.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

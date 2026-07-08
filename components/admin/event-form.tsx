@@ -29,6 +29,7 @@ import type {
   InvitationLanguage,
 } from "@/types/events";
 import type { ContentSlot, Profile, TemplateType } from "@/types/database";
+import { useTranslation } from "@/hooks/use-locale";
 
 type HostOption = Pick<Profile, "id" | "full_name" | "role">;
 
@@ -60,6 +61,7 @@ export function EventForm({
   catalogs: EventCatalogs;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [eventType, setEventType] = useState<CeremonyEventType>("wedding");
   const [groomName, setGroomName] = useState("");
@@ -173,19 +175,19 @@ export function EventForm({
     setLoading(true);
 
     if (!title.trim()) {
-      setError("Event title is required.");
+      setError(t("eventForm.titleRequired"));
       setLoading(false);
       return;
     }
 
     if (coupleEvent && !groomName.trim() && !brideName.trim()) {
-      setError("Please enter at least a groom or bride name.");
+      setError(t("eventForm.coupleNameRequired"));
       setLoading(false);
       return;
     }
 
     if (!coupleEvent && !honoreeName.trim()) {
-      setError("Please enter the honoree name.");
+      setError(t("eventForm.honoreeRequired"));
       setLoading(false);
       return;
     }
@@ -250,7 +252,7 @@ export function EventForm({
         }
       } catch (importError) {
         const message =
-          importError instanceof Error ? importError.message : "Guest import failed.";
+          importError instanceof Error ? importError.message : t("guestImport.importFailed");
         setError(`Event created, but guest import failed: ${message}`);
         setLoading(false);
         router.push(`/admin/events/${result.eventId}`);
@@ -264,10 +266,10 @@ export function EventForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Section title="Event type & names" description="Fields change based on ceremony type.">
+      <Section title={t("eventForm.eventTypeNames")} description={t("eventForm.eventTypeNamesDesc")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="eventType">Event type</Label>
+            <Label htmlFor="eventType">{t("eventForm.eventType")}</Label>
             <Select
               id="eventType"
               value={eventType}
@@ -276,7 +278,7 @@ export function EventForm({
             >
               {EVENT_TYPE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(`eventTypes.${option.value}`)}
                 </option>
               ))}
             </Select>
@@ -285,7 +287,7 @@ export function EventForm({
           {coupleEvent ? (
             <>
               <div>
-                <Label htmlFor="groom">Groom name</Label>
+                <Label htmlFor="groom">{t("eventForm.groomName")}</Label>
                 <Input
                   id="groom"
                   value={groomName}
@@ -294,7 +296,7 @@ export function EventForm({
                 />
               </div>
               <div>
-                <Label htmlFor="bride">Bride name</Label>
+                <Label htmlFor="bride">{t("eventForm.brideName")}</Label>
                 <Input
                   id="bride"
                   value={brideName}
@@ -305,19 +307,19 @@ export function EventForm({
             </>
           ) : (
             <div className="sm:col-span-2">
-              <Label htmlFor="honoree">Name</Label>
+              <Label htmlFor="honoree">{t("eventForm.honoreeName")}</Label>
               <Input
                 id="honoree"
                 value={honoreeName}
                 onChange={(e) => setHonoreeName(e.target.value)}
-                placeholder="Birthday or graduate name"
+                placeholder={t("eventForm.honoreePlaceholder")}
                 className="mt-1"
               />
             </div>
           )}
 
           <div className="sm:col-span-2">
-            <Label htmlFor="title">Event title *</Label>
+            <Label htmlFor="title">{t("eventForm.eventTitle")} *</Label>
             <Input
               id="title"
               value={title}
@@ -332,10 +334,10 @@ export function EventForm({
         </div>
       </Section>
 
-      <Section title="Custom invitation URL">
+      <Section title={t("eventForm.customUrl")}>
         <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
           <div>
-            <Label htmlFor="urlText">URL text</Label>
+            <Label htmlFor="urlText">{t("eventForm.urlText")}</Label>
             <Input
               id="urlText"
               value={urlText}
@@ -350,11 +352,11 @@ export function EventForm({
               onClick={generateUrlSlug}
               className="rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
             >
-              Generate URL
+              {t("eventForm.generateUrl")}
             </button>
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="slug">Final slug</Label>
+            <Label htmlFor="slug">{t("eventForm.finalSlug")}</Label>
             <Input
               id="slug"
               value={slug}
@@ -363,16 +365,16 @@ export function EventForm({
               className="mt-1"
             />
             <p className="mt-1 text-xs text-zinc-500">
-              Preview: /e/{slug.trim() || autoSlug || "your-slug"}/[guest-token]
+              {t("eventForm.urlPreview", { slug: slug.trim() || autoSlug || "your-slug" })}
             </p>
           </div>
         </div>
       </Section>
 
-      <Section title="Schedule & venue">
+      <Section title={t("eventForm.scheduleVenue")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="start">Start date & time</Label>
+            <Label htmlFor="start">{t("eventForm.startDatetime")}</Label>
             <Input
               id="start"
               type="datetime-local"
@@ -382,7 +384,7 @@ export function EventForm({
             />
           </div>
           <div>
-            <Label htmlFor="end">End date & time</Label>
+            <Label htmlFor="end">{t("eventForm.endDatetime")}</Label>
             <Input
               id="end"
               type="datetime-local"
@@ -404,21 +406,21 @@ export function EventForm({
         </div>
       </Section>
 
-      <Section title="Message & media">
+      <Section title={t("eventForm.messageMedia")}>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="message">Custom message</Label>
+            <Label htmlFor="message">{t("eventForm.customMessage")}</Label>
             <Textarea
               id="message"
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
               rows={4}
               className="mt-1"
-              placeholder="Your presence would mean the world to us…"
+              placeholder={t("eventForm.customMessagePlaceholder")}
             />
           </div>
           <div>
-            <Label htmlFor="heroImage">Image (optional URL)</Label>
+            <Label htmlFor="heroImage">{t("eventForm.imageOptional")}</Label>
             <Input
               id="heroImage"
               value={heroImageUrl}
@@ -431,11 +433,11 @@ export function EventForm({
       </Section>
 
       <Section
-        title="Animated template"
-        description="Templates are managed by admin and shown as selectable previews."
+        title={t("eventForm.animatedTemplate")}
+        description={t("eventForm.animatedTemplateDesc")}
       >
         <CatalogPicker
-          label="Animated template"
+          label={t("eventForm.animatedTemplate")}
           items={catalogs.animatedTemplates}
           value={animatedTemplateId}
           onChange={setAnimatedTemplateId}
@@ -455,19 +457,19 @@ export function EventForm({
         />
       </Section>
 
-      <Section title="Invitation theme">
+      <Section title={t("eventForm.invitationTheme")}>
         <CatalogPicker
-          label="Theme"
+          label={t("eventForm.invitationTheme")}
           items={catalogs.themes}
           value={themeId}
           onChange={setThemeId}
         />
       </Section>
 
-      <Section title="Typography & styling">
+      <Section title={t("eventForm.typography")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label>Invitation language</Label>
+            <Label>{t("eventForm.invitationLanguage")}</Label>
             <Select
               value={invitationLanguage}
               onChange={(e) => setInvitationLanguage(e.target.value as InvitationLanguage)}
@@ -475,13 +477,13 @@ export function EventForm({
             >
               {LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(`common.${option.value === "ar" ? "arabic" : "english"}`)}
                 </option>
               ))}
             </Select>
           </div>
           <div>
-            <Label>Default language for guests</Label>
+            <Label>{t("eventForm.defaultGuestLanguage")}</Label>
             <Select
               value={localeDefault}
               onChange={(e) => setLocaleDefault(e.target.value as InvitationLanguage)}
@@ -489,7 +491,7 @@ export function EventForm({
             >
               {LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(`common.${option.value === "ar" ? "arabic" : "english"}`)}
                 </option>
               ))}
             </Select>
@@ -498,7 +500,7 @@ export function EventForm({
 
         <div className="mt-4">
           <CatalogPicker
-            label="Font"
+            label={t("eventForm.font")}
             items={filteredFonts}
             value={fontId}
             onChange={setFontId}
@@ -515,7 +517,7 @@ export function EventForm({
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <RangeField
-            label="Name size"
+            label={t("eventForm.nameSize")}
             value={nameSizePx}
             min={36}
             max={72}
@@ -524,7 +526,7 @@ export function EventForm({
             onChange={setNameSizePx}
           />
           <RangeField
-            label="Letter spacing"
+            label={t("eventForm.letterSpacing")}
             value={letterSpacingEm}
             min={-0.02}
             max={0.2}
@@ -536,7 +538,7 @@ export function EventForm({
 
         <div className="mt-4">
           <CatalogPicker
-            label="Font color"
+            label={t("eventForm.fontColor")}
             items={catalogs.fontColors}
             value={fontColorId}
             onChange={setFontColorId}
@@ -553,47 +555,47 @@ export function EventForm({
         </div>
       </Section>
 
-      <Section title="Feature toggles">
+      <Section title={t("eventForm.featureToggles")}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <SwitchField label="Confetti effect" checked={toggles.confetti} onChange={(v) => updateToggle("confetti", v)} />
-          <SwitchField label="Background music" checked={toggles.background_music} onChange={(v) => updateToggle("background_music", v)} />
-          <SwitchField label="Show language selector to guests" checked={toggles.show_language_selector} onChange={(v) => updateToggle("show_language_selector", v)} />
-          <SwitchField label="Live photo album" checked={toggles.live_photo_album} onChange={(v) => updateToggle("live_photo_album", v)} />
-          <SwitchField label="Guest comments" checked={toggles.guest_comments} onChange={(v) => updateToggle("guest_comments", v)} />
-          <SwitchField label="Guest book" checked={toggles.guest_book} onChange={(v) => updateToggle("guest_book", v)} />
-          <SwitchField label="RSVP" checked={toggles.rsvp} onChange={(v) => updateToggle("rsvp", v)} />
-          <SwitchField label="Dress code" checked={toggles.dress_code} onChange={(v) => updateToggle("dress_code", v)} />
-          <SwitchField label="Important notes" checked={toggles.important_notes} onChange={(v) => updateToggle("important_notes", v)} />
-          <SwitchField label="Invitation protection" checked={toggles.invitation_protection} onChange={(v) => updateToggle("invitation_protection", v)} />
-          <SwitchField label="WhatsApp messages" checked={toggles.whatsapp_messages} onChange={(v) => updateToggle("whatsapp_messages", v)} />
+          <SwitchField label={t("eventForm.confetti")} checked={toggles.confetti} onChange={(v) => updateToggle("confetti", v)} />
+          <SwitchField label={t("eventForm.backgroundMusic")} checked={toggles.background_music} onChange={(v) => updateToggle("background_music", v)} />
+          <SwitchField label={t("eventForm.showLanguageSelector")} checked={toggles.show_language_selector} onChange={(v) => updateToggle("show_language_selector", v)} />
+          <SwitchField label={t("eventForm.livePhotoAlbum")} checked={toggles.live_photo_album} onChange={(v) => updateToggle("live_photo_album", v)} />
+          <SwitchField label={t("eventForm.guestComments")} checked={toggles.guest_comments} onChange={(v) => updateToggle("guest_comments", v)} />
+          <SwitchField label={t("eventForm.guestBook")} checked={toggles.guest_book} onChange={(v) => updateToggle("guest_book", v)} />
+          <SwitchField label={t("eventForm.rsvp")} checked={toggles.rsvp} onChange={(v) => updateToggle("rsvp", v)} />
+          <SwitchField label={t("eventForm.dressCode")} checked={toggles.dress_code} onChange={(v) => updateToggle("dress_code", v)} />
+          <SwitchField label={t("eventForm.importantNotes")} checked={toggles.important_notes} onChange={(v) => updateToggle("important_notes", v)} />
+          <SwitchField label={t("eventForm.invitationProtection")} checked={toggles.invitation_protection} onChange={(v) => updateToggle("invitation_protection", v)} />
+          <SwitchField label={t("eventForm.whatsappMessages")} checked={toggles.whatsapp_messages} onChange={(v) => updateToggle("whatsapp_messages", v)} />
         </div>
 
         {toggles.background_music ? (
           <div className="mt-4">
-            <Label htmlFor="music">Background music URL</Label>
+            <Label htmlFor="music">{t("eventForm.musicUrl")}</Label>
             <Input id="music" value={backgroundMusicUrl} onChange={(e) => setBackgroundMusicUrl(e.target.value)} className="mt-1" />
           </div>
         ) : null}
 
         {toggles.dress_code ? (
           <div className="mt-4">
-            <Label htmlFor="dressCode">Dress code details</Label>
+            <Label htmlFor="dressCode">{t("eventForm.dressCodeDetails")}</Label>
             <Textarea id="dressCode" value={dressCodeText} onChange={(e) => setDressCodeText(e.target.value)} rows={2} className="mt-1" />
           </div>
         ) : null}
 
         {toggles.important_notes ? (
           <div className="mt-4">
-            <Label htmlFor="notes">Important notes</Label>
+            <Label htmlFor="notes">{t("eventForm.importantNotesDetails")}</Label>
             <Textarea id="notes" value={importantNotesText} onChange={(e) => setImportantNotesText(e.target.value)} rows={2} className="mt-1" />
           </div>
         ) : null}
       </Section>
 
-      <Section title="Admin & layout">
+      <Section title={t("eventForm.adminLayout")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="host">Host / client</Label>
+            <Label htmlFor="host">{t("eventForm.hostClient")}</Label>
             <Select id="host" value={hostId} onChange={(e) => setHostId(e.target.value)} className="mt-1">
               {hosts.map((host) => (
                 <option key={host.id} value={host.id}>
@@ -603,31 +605,31 @@ export function EventForm({
             </Select>
           </div>
           <div>
-            <Label htmlFor="layout">Layout type</Label>
+            <Label htmlFor="layout">{t("eventForm.layoutType")}</Label>
             <Select id="layout" value={templateType} onChange={(e) => handleTemplateChange(e.target.value as TemplateType)} className="mt-1">
-              <option value="standard">Standard</option>
-              <option value="vip">VIP</option>
+              <option value="standard">{t("eventForm.standard")}</option>
+              <option value="vip">{t("eventForm.vip")}</option>
             </Select>
           </div>
           <div>
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t("admin.status")}</Label>
             <Select id="status" value={status} onChange={(e) => setStatus(e.target.value as "draft" | "published")} className="mt-1">
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
+              <option value="draft">{t("eventForm.draft")}</option>
+              <option value="published">{t("eventForm.published")}</option>
             </Select>
           </div>
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="primary">Primary color override</Label>
+            <Label htmlFor="primary">{t("eventForm.primaryColor")}</Label>
             <div className="mt-1 flex gap-2">
               <input id="primary" type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-10 w-12 rounded border" />
               <Input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
             </div>
           </div>
           <div>
-            <Label htmlFor="secondary">Secondary color override</Label>
+            <Label htmlFor="secondary">{t("eventForm.secondaryColor")}</Label>
             <div className="mt-1 flex gap-2">
               <input id="secondary" type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="h-10 w-12 rounded border" />
               <Input value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} />
@@ -636,16 +638,18 @@ export function EventForm({
         </div>
       </Section>
 
-      <Section title="Advanced content blocks" description="Optional dynamic blocks for the invitation renderer.">
+      <Section title={t("eventForm.contentBlocks")} description={t("eventForm.contentBlocksDesc")}>
         <ContentSlotsEditor slots={contentSlots} onChange={setContentSlots} />
       </Section>
 
-      <Section title="Guest list import">
-        <p className="mb-4 text-sm text-zinc-500">
-          CSV or Excel: name, phone_number, is_vip, table_number, companion_count
-        </p>
+      <Section title={t("eventForm.guestImport")}>
+        <p className="mb-4 text-sm text-zinc-500">{t("eventForm.guestImportDesc")}</p>
         <Input type="file" accept=".csv,.xlsx,.xls" onChange={(e) => setGuestFile(e.target.files?.[0] ?? null)} />
-        {guestFile ? <p className="mt-2 text-sm text-zinc-600">Selected: {guestFile.name}</p> : null}
+        {guestFile ? (
+          <p className="mt-2 text-sm text-zinc-600">
+            {t("eventForm.selectedFile", { name: guestFile.name })}
+          </p>
+        ) : null}
       </Section>
 
       {error ? <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
@@ -655,7 +659,7 @@ export function EventForm({
         disabled={loading}
         className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60"
       >
-        {loading ? "Creating…" : "Create event"}
+        {loading ? t("eventForm.creating") : t("eventForm.createEvent")}
       </button>
     </form>
   );

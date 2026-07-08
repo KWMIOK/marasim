@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslation } from "@/hooks/use-locale";
+import { getAuthCallbackUrl } from "@/lib/utils/app-origin";
 
 function GoogleIcon() {
   return (
@@ -44,14 +46,13 @@ function PhoneIcon() {
 }
 
 export function SocialLogin() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
   const errorParam = searchParams.get("error");
 
   const [error, setError] = useState<string | null>(
-    errorParam === "auth_callback_failed"
-      ? "Sign in failed. Please try again."
-      : null
+    errorParam === "auth_callback_failed" ? t("auth.signInFailed") : null
   );
   const [loading, setLoading] = useState<"google" | null>(null);
 
@@ -60,16 +61,12 @@ export function SocialLogin() {
     setLoading("google");
 
     const supabase = createClient();
-    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
-
-    if (redirectTo?.startsWith("/")) {
-      callbackUrl.searchParams.set("next", redirectTo);
-    }
+    const callbackUrl = getAuthCallbackUrl(undefined, redirectTo);
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: callbackUrl.toString(),
+        redirectTo: callbackUrl,
         queryParams: {
           prompt: "select_account",
         },
@@ -91,7 +88,7 @@ export function SocialLogin() {
         className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 bg-white py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleIcon />
-        {loading === "google" ? "Redirecting to Google…" : "Continue with Google"}
+        {loading === "google" ? t("auth.redirectingGoogle") : t("auth.continueGoogle")}
       </button>
 
       <button
@@ -100,8 +97,8 @@ export function SocialLogin() {
         className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 text-sm font-medium text-zinc-400"
       >
         <AppleIcon />
-        Continue with Apple
-        <span className="text-xs">(coming soon)</span>
+        {t("auth.continueApple")}
+        <span className="text-xs">({t("common.comingSoon")})</span>
       </button>
 
       <button
@@ -110,8 +107,8 @@ export function SocialLogin() {
         className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 text-sm font-medium text-zinc-400"
       >
         <PhoneIcon />
-        Continue with Kuwait mobile (SMS)
-        <span className="text-xs">(coming soon)</span>
+        {t("auth.continuePhone")}
+        <span className="text-xs">({t("common.comingSoon")})</span>
       </button>
 
       {error ? (

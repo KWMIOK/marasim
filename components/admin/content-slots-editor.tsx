@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslation } from "@/hooks/use-locale";
 
 export function ContentSlotsEditor({
   slots,
@@ -13,6 +14,8 @@ export function ContentSlotsEditor({
   slots: ContentSlot[];
   onChange: (slots: ContentSlot[]) => void;
 }) {
+  const { t } = useTranslation();
+
   function updateSlot(index: number, patch: Partial<ContentSlot>) {
     onChange(slots.map((slot, i) => (i === index ? { ...slot, ...patch } : slot)));
   }
@@ -24,7 +27,7 @@ export function ContentSlotsEditor({
         key: `slot_${slots.length + 1}`,
         type: "text",
         value: "",
-        label: "New block",
+        label: t("eventForm.newBlock"),
         locale: "both",
         order: slots.length,
       },
@@ -44,20 +47,20 @@ export function ContentSlotsEditor({
         >
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-medium text-zinc-800">
-              Block {index + 1}: {slot.label ?? slot.key}
+              {t("eventForm.block")} {index + 1}: {slot.label ?? slot.key}
             </p>
             <button
               type="button"
               onClick={() => removeSlot(index)}
               className="text-xs text-red-600 hover:text-red-700"
             >
-              Remove
+              {t("eventForm.remove")}
             </button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <Label>Key</Label>
+              <Label>{t("eventForm.key")}</Label>
               <Input
                 value={slot.key}
                 onChange={(e) => updateSlot(index, { key: e.target.value })}
@@ -65,7 +68,7 @@ export function ContentSlotsEditor({
               />
             </div>
             <div>
-              <Label>Label</Label>
+              <Label>{t("eventForm.label")}</Label>
               <Input
                 value={slot.label ?? ""}
                 onChange={(e) => updateSlot(index, { label: e.target.value })}
@@ -73,7 +76,7 @@ export function ContentSlotsEditor({
               />
             </div>
             <div>
-              <Label>Type</Label>
+              <Label>{t("eventForm.type")}</Label>
               <Select
                 value={slot.type}
                 onChange={(e) =>
@@ -81,13 +84,13 @@ export function ContentSlotsEditor({
                 }
                 className="mt-1"
               >
-                <option value="text">Text</option>
-                <option value="image">Image URL</option>
-                <option value="video">Video URL</option>
+                <option value="text">{t("eventForm.text")}</option>
+                <option value="image">{t("eventForm.imageUrl")}</option>
+                <option value="video">{t("eventForm.videoUrl")}</option>
               </Select>
             </div>
             <div>
-              <Label>Locale</Label>
+              <Label>{t("eventForm.locale")}</Label>
               <Select
                 value={slot.locale ?? "both"}
                 onChange={(e) =>
@@ -95,15 +98,15 @@ export function ContentSlotsEditor({
                 }
                 className="mt-1"
               >
-                <option value="both">Arabic & English</option>
-                <option value="ar">Arabic</option>
-                <option value="en">English</option>
+                <option value="both">{t("eventForm.localeBoth")}</option>
+                <option value="ar">{t("eventForm.localeAr")}</option>
+                <option value="en">{t("eventForm.localeEn")}</option>
               </Select>
             </div>
           </div>
 
           <div className="mt-3">
-            <Label>Content / URL</Label>
+            <Label>{t("eventForm.contentUrl")}</Label>
             {slot.type === "text" ? (
               <Textarea
                 value={slot.value}
@@ -128,7 +131,7 @@ export function ContentSlotsEditor({
         onClick={addSlot}
         className="rounded-lg border border-dashed border-zinc-300 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
       >
-        + Add content block
+        {t("eventForm.addContentBlock")}
       </button>
     </div>
   );
