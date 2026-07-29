@@ -2,8 +2,10 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { useEffect } from "react";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { OCCASION_TYPES_BY_CATEGORY, type EventCategory } from "@/lib/events/categories";
+import { startOccasionCategoryFlow, saveOccasionFlow } from "@/lib/flow/occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
 import type { TranslationKey } from "@/lib/i18n";
@@ -21,16 +23,19 @@ function CategoryCard({
   title,
   children,
   href,
+  category,
   className,
 }: {
   title: string;
   children: ReactNode;
   href: string;
+  category: EventCategory;
   className?: string;
 }) {
   return (
     <Link
       href={href}
+      onClick={() => startOccasionCategoryFlow(category)}
       className={cn(
         "surface-card block rounded-2xl p-5 shadow-lg shadow-black/20 transition hover:border-border-gold-strong",
         className
@@ -45,6 +50,10 @@ function CategoryCard({
 export function ChooseEventTypeContent() {
   const { t } = useTranslation();
 
+  useEffect(() => {
+    saveOccasionFlow({ step: "category" });
+  }, []);
+
   function occasionLabel(category: EventCategory, type: string) {
     return t(`occasionTypes.${type}` as TranslationKey);
   }
@@ -57,7 +66,11 @@ export function ChooseEventTypeContent() {
       </header>
 
       <div className="mt-8 space-y-5">
-        <CategoryCard title={t("chooseEventType.personal.title")} href={ROUTES.occasionCategory("personal")}>
+        <CategoryCard
+          title={t("chooseEventType.personal.title")}
+          href={ROUTES.occasionCategory("personal")}
+          category="personal"
+        >
           <div className="mt-3 flex flex-wrap gap-2">
             {OCCASION_TYPES_BY_CATEGORY.personal.map((type) => (
               <EventTypeCapsule key={type} label={occasionLabel("personal", type)} />
@@ -68,7 +81,11 @@ export function ChooseEventTypeContent() {
           </span>
         </CategoryCard>
 
-        <CategoryCard title={t("chooseEventType.formal.title")} href={ROUTES.occasionCategory("formal")}>
+        <CategoryCard
+          title={t("chooseEventType.formal.title")}
+          href={ROUTES.occasionCategory("formal")}
+          category="formal"
+        >
           <div className="mt-3 flex flex-wrap gap-2">
             {OCCASION_TYPES_BY_CATEGORY.formal.map((type) => (
               <EventTypeCapsule key={type} label={occasionLabel("formal", type)} />
@@ -79,7 +96,11 @@ export function ChooseEventTypeContent() {
           </span>
         </CategoryCard>
 
-        <CategoryCard title={t("chooseEventType.vip.title")} href={ROUTES.occasionCategory("vip")}>
+        <CategoryCard
+          title={t("chooseEventType.vip.title")}
+          href={ROUTES.occasionCategory("vip")}
+          category="vip"
+        >
           <p className="mt-2 text-sm text-muted">{t("chooseEventType.vip.subtitle")}</p>
           <span className="btn-gold mt-5 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-medium">
             {t("chooseEventType.vip.cta")}

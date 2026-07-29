@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { OccasionTypeIcon } from "@/components/occasions/occasion-type-icon";
@@ -9,6 +9,11 @@ import {
   type EventCategory,
   type OccasionTypeId,
 } from "@/lib/events/categories";
+import {
+  readOccasionFlowForCategory,
+  saveOccasionFlow,
+} from "@/lib/flow/occasion-flow";
+import { useOccasionFlowPersistence } from "@/hooks/use-occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
 import type { TranslationKey } from "@/lib/i18n";
@@ -32,6 +37,7 @@ function ProceedCard({
   buttonLabel,
   href,
   disabled,
+  onNavigate,
   variant = "outline",
 }: {
   title: string;
@@ -39,6 +45,7 @@ function ProceedCard({
   buttonLabel: string;
   href: string;
   disabled?: boolean;
+  onNavigate?: () => void;
   variant?: "outline" | "gold";
 }) {
   const buttonClass =
@@ -55,7 +62,11 @@ function ProceedCard({
           {buttonLabel}
         </button>
       ) : (
-        <Link href={href} className={cn(buttonClass, "mt-5 flex w-full items-center justify-center")}>
+        <Link
+          href={href}
+          onClick={onNavigate}
+          className={cn(buttonClass, "mt-5 flex w-full items-center justify-center")}
+        >
           {buttonLabel}
         </Link>
       )}
@@ -65,10 +76,26 @@ function ProceedCard({
 
 export function ChooseOccasionContent({ category }: { category: EventCategory }) {
   const { t } = useTranslation();
-  const [selectedOccasion, setSelectedOccasion] = useState<OccasionTypeId | null>(null);
+  const [selectedOccasion, setSelectedOccasion] = useState<OccasionTypeId | null>(() =>
+    readOccasionFlowForCategory(category)
+  );
   const occasionTypes = OCCASION_TYPES_BY_CATEGORY[category];
   const categoryTitleKey = `chooseOccasion.${category}.title` as TranslationKey;
   const hasSelection = selectedOccasion !== null;
+
+  useEffect(() => {
+    const savedOccasion = readOccasionFlowForCategory(category);
+    if (savedOccasion) {
+      setSelectedOccasion(savedOccasion);
+    }
+  }, [category]);
+
+  useOccasionFlowPersistence({
+    step: "occasion",
+    category,
+    occasion: selectedOccasion,
+    templateId: null,
+  });
 
   return (
     <AppPageShell>
@@ -119,6 +146,14 @@ export function ChooseOccasionContent({ category }: { category: EventCategory })
             buttonLabel={t("chooseOccasion.readyTemplates.cta")}
             href={buildTemplatesHref(category, selectedOccasion)}
             disabled={!hasSelection}
+            onNavigate={() =>
+              saveOccasionFlow({
+                step: "browse",
+                category,
+                occasion: selectedOccasion,
+                templateId: null,
+              })
+            }
           />
           <ProceedCard
             title={t("chooseOccasion.bespokeDesign.title")}

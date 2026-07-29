@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { SlideToChoose } from "@/components/templates/slide-to-choose";
 import { buildTemplateBrowseQuery } from "@/lib/templates/browse";
+import { isEventCategory } from "@/lib/events/categories";
+import { isOccasionTypeId, saveOccasionFlow } from "@/lib/flow/occasion-flow";
+import { useOccasionFlowPersistence } from "@/hooks/use-occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
 import type { InvitationAnimatedTemplate } from "@/types/events";
@@ -36,12 +40,39 @@ export function TemplatePreviewContent({ template }: { template: InvitationAnima
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const categoryParam = searchParams.get("category");
+  const occasionParam = searchParams.get("occasion");
+  const category = categoryParam && isEventCategory(categoryParam) ? categoryParam : null;
+  const occasion = occasionParam && isOccasionTypeId(occasionParam) ? occasionParam : null;
+
   const browseQuery = buildTemplateBrowseQuery({
-    category: searchParams.get("category"),
-    occasion: searchParams.get("occasion"),
+    category,
+    occasion,
   });
 
+  useOccasionFlowPersistence({
+    step: "preview",
+    category,
+    occasion,
+    templateId: template.id,
+  });
+
+  useEffect(() => {
+    saveOccasionFlow({
+      step: "preview",
+      category,
+      occasion,
+      templateId: template.id,
+    });
+  }, [category, occasion, template.id]);
+
   function handleChooseComplete() {
+    saveOccasionFlow({
+      step: "customize",
+      category,
+      occasion,
+      templateId: template.id,
+    });
     router.push(`${ROUTES.templates.customize(template.id)}${browseQuery}`);
   }
 

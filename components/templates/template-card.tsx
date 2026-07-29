@@ -43,12 +43,14 @@ export function TemplateCard({
   isChoosing,
   onChooseMode,
   onChooseComplete,
+  onPreview,
 }: {
   template: BrowseTemplate;
   browseQuery: string;
   isChoosing: boolean;
   onChooseMode: () => void;
   onChooseComplete: () => void;
+  onPreview?: () => void;
 }) {
   const { t } = useTranslation();
   const cardRef = useRef<HTMLElement>(null);
@@ -65,6 +67,7 @@ export function TemplateCard({
 
   function handlePreviewClick(event: ReactMouseEvent) {
     event.stopPropagation();
+    onPreview?.();
   }
 
   return (

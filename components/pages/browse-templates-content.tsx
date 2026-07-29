@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AppPageShell } from "@/components/shared/app-page-shell";
@@ -21,6 +21,13 @@ import {
   type EventCategory,
   type OccasionTypeId,
 } from "@/lib/events/categories";
+import {
+  getOccasionFlow,
+  isOccasionTypeId,
+  readOccasionFlowBrowseState,
+  saveOccasionFlow,
+} from "@/lib/flow/occasion-flow";
+import { useOccasionFlowPersistence } from "@/hooks/use-occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
 import type { InvitationAnimatedTemplate } from "@/types/events";
@@ -37,6 +44,29 @@ function uniqueOccasionTypes(types: OccasionTypeId[]): OccasionTypeId[] {
   return [...new Set(types)];
 }
 
+function resolveBrowseContext(
+  categoryParam: string | null,
+  occasionParam: string | null
+) {
+  const savedFlow = getOccasionFlow();
+
+  const category =
+    categoryParam && isEventCategory(categoryParam)
+      ? categoryParam
+      : savedFlow?.category ?? null;
+
+  const occasionFromUrl =
+    occasionParam && isOccasionTypeId(occasionParam) ? occasionParam : null;
+  const occasionFromFlow =
+    savedFlow?.category === category ? savedFlow.occasion : null;
+
+  return {
+    category,
+    occasion: occasionFromUrl ?? occasionFromFlow,
+    savedBrowse: savedFlow?.browse ?? readOccasionFlowBrowseState(),
+  };
+}
+
 export function BrowseTemplatesContent({
   templates,
 }: {
@@ -45,36 +75,65 @@ export function BrowseTemplatesContent({
   const { t } = useTranslation();
   const searchParams = useSearchParams();
 
-  const categoryParam = searchParams.get("category");
-  const occasionParam = searchParams.get("occasion");
-
-  const category = categoryParam && isEventCategory(categoryParam) ? categoryParam : null;
-  const initialOccasion =
-    occasionParam && ALL_OCCASION_TYPES.includes(occasionParam as OccasionTypeId)
-      ? (occasionParam as OccasionTypeId)
-      : null;
+  const initialContext = resolveBrowseContext(
+    searchParams.get("category"),
+    searchParams.get("occasion")
+  );
 
   const browseTemplates = useMemo(() => enrichTemplatesForBrowse(templates), [templates]);
   const occasionTypes = useMemo(
     () =>
       uniqueOccasionTypes(
-        category ? OCCASION_TYPES_BY_CATEGORY[category] : ALL_OCCASION_TYPES
+        initialContext.category
+          ? OCCASION_TYPES_BY_CATEGORY[initialContext.category]
+          : ALL_OCCASION_TYPES
       ),
-    [category]
+    [initialContext.category]
   );
 
-  const [activeTab, setActiveTab] = useState<BrowseTab>("ready");
-  const [selectedOccasion, setSelectedOccasion] = useState<OccasionTypeId | null>(initialOccasion);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [choosingTemplateId, setChoosingTemplateId] = useState<string | null>(null);
-  const [focusTemplateId, setFocusTemplateId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<BrowseTab>(initialContext.savedBrowse.activeTab);
+  const [selectedOccasion, setSelectedOccasion] = useState<OccasionTypeId | null>(
+    initialContext.occasion
+  );
+  const [searchQuery, setSearchQuery] = useState(initialContext.savedBrowse.searchQuery);
+  const [choosingTemplateId, setChoosingTemplateId] = useState<string | null>(
+    initialContext.savedBrowse.choosingTemplateId
+  );
+  const [focusTemplateId, setFocusTemplateId] = useState<string | null>(
+    initialContext.savedBrowse.focusTemplateId
+  );
+
+  const category = initialContext.category;
 
   const browseQuery = buildTemplateBrowseQuery({
-    category: category ?? categoryParam,
-    occasion: selectedOccasion ?? occasionParam,
+    category,
+    occasion: selectedOccasion,
   });
 
   const navigateToCustomize = useTemplateSelectionNavigation(browseQuery);
+
+  useOccasionFlowPersistence({
+    step: "browse",
+    category,
+    occasion: selectedOccasion,
+    templateId: null,
+    browse: {
+      searchQuery,
+      activeTab,
+      choosingTemplateId,
+      focusTemplateId,
+    },
+  });
+
+  useEffect(() => {
+    if (initialContext.savedBrowse.choosingTemplateId) {
+      requestAnimationFrame(() => {
+        document
+          .getElementById(`template-card-${initialContext.savedBrowse.choosingTemplateId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+  }, [initialContext.savedBrowse.choosingTemplateId]);
 
   const filteredTemplates = useMemo(() => {
     let results = filterTemplatesByName(browseTemplates, searchQuery);
@@ -99,6 +158,25 @@ export function BrowseTemplatesContent({
         behavior: "smooth",
         block: "center",
       });
+    });
+  }
+
+  function handleChooseComplete(templateId: string) {
+    saveOccasionFlow({
+      step: "customize",
+      category,
+      occasion: selectedOccasion,
+      templateId,
+    });
+    navigateToCustomize(templateId);
+  }
+
+  function handlePreview(templateId: string) {
+    saveOccasionFlow({
+      step: "preview",
+      category,
+      occasion: selectedOccasion,
+      templateId,
     });
   }
 
@@ -182,7 +260,8 @@ export function BrowseTemplatesContent({
                   browseQuery={browseQuery}
                   isChoosing={choosingTemplateId === template.id}
                   onChooseMode={() => setChoosingTemplateId(template.id)}
-                  onChooseComplete={() => navigateToCustomize(template.id)}
+                  onChooseComplete={() => handleChooseComplete(template.id)}
+                  onPreview={() => handlePreview(template.id)}
                 />
               </div>
             ))
