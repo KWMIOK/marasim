@@ -8,7 +8,7 @@ export function HomeContent() {
   const { t } = useTranslation();
 
   return (
-    <main className="flex min-h-[calc(100vh-5rem)] flex-col justify-end px-6 pb-6">
+    <main className="flex min-h-[calc(100vh-5rem)] flex-col justify-end px-6 pb-6 pt-16">
       <div className="mx-auto w-full max-w-lg text-center">
         <h1 className="text-3xl font-bold leading-snug text-gold-light sm:text-4xl">
           <span className="block">{t("home.headline1")}</span>

@@ -148,6 +148,23 @@ body {
     color: #e8d5a3;
   }
 
+  .btn-auth-dark {
+    border: 1px solid rgb(201 162 39 / 0.2);
+    background: linear-gradient(135deg, rgb(28 24 18) 0%, rgb(12 12 12) 100%);
+    color: #e8d5a3;
+    transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  }
+
+  .btn-auth-dark:not(:disabled):hover {
+    border-color: rgb(201 162 39 / 0.45);
+    background: linear-gradient(135deg, rgb(38 32 22) 0%, rgb(18 16 12) 100%);
+  }
+
+  .btn-auth-dark:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
   .nav-link {
     color: #9a9070;
     transition: color 0.15s ease;
