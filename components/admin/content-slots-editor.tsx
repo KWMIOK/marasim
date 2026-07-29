@@ -43,10 +43,10 @@ export function ContentSlotsEditor({
       {slots.map((slot, index) => (
         <div
           key={`${slot.key}-${index}`}
-          className="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+          className="rounded-xl border border-border-gold bg-transparent p-4"
         >
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-medium text-zinc-800">
+            <p className="text-sm font-medium text-gold-light">
               {t("eventForm.block")} {index + 1}: {slot.label ?? slot.key}
             </p>
             <button
@@ -129,7 +129,7 @@ export function ContentSlotsEditor({
       <button
         type="button"
         onClick={addSlot}
-        className="rounded-lg border border-dashed border-zinc-300 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
+        className="rounded-lg border border-dashed border-border-gold px-4 py-2 text-sm text-muted hover:bg-transparent"
       >
         {t("eventForm.addContentBlock")}
       </button>

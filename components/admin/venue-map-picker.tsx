@@ -214,28 +214,28 @@ export function VenueMapPicker({
           className="mt-1"
           autoComplete="off"
         />
-        <p className="mt-1 text-xs text-zinc-500">{t("venue.hint")}</p>
+        <p className="mt-1 text-xs text-muted">{t("venue.hint")}</p>
         {loadError ? <p className="mt-1 text-xs text-red-600">{loadError}</p> : null}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200">
-        <div ref={mapContainerRef} className="h-72 w-full bg-zinc-100" />
+      <div className="overflow-hidden rounded-xl border border-border-gold">
+        <div ref={mapContainerRef} className="h-72 w-full bg-surface" />
         {!mapsReady ? (
-          <p className="border-t border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+          <p className="border-t border-border-gold bg-transparent px-3 py-2 text-xs text-muted">
             {t("venue.loadingMap")}
           </p>
         ) : null}
       </div>
 
       {mapsLat != null && mapsLng != null ? (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           {t("venue.pinCoords", {
             lat: mapsLat.toFixed(6),
             lng: mapsLng.toFixed(6),
           })}
         </p>
       ) : (
-        <p className="text-xs text-zinc-400">{t("venue.noPin")}</p>
+        <p className="text-xs text-gold-muted">{t("venue.noPin")}</p>
       )}
 
       <div>

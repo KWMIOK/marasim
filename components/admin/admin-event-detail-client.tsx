@@ -46,62 +46,62 @@ export function AdminEventDetailClient({
         <div>
           <Link
             href={ROUTES.admin.events}
-            className="text-sm text-zinc-500 hover:text-zinc-700"
+            className="text-sm text-muted hover:text-foreground"
           >
             {t("admin.backToEvents")}
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold text-zinc-900">{event.title}</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <h1 className="mt-2 text-2xl font-semibold text-gold-light">{event.title}</h1>
+          <p className="mt-1 text-sm text-muted">
             {t(eventTypeKey(event.event_type))} · /e/{event.slug} · {event.template_type} ·{" "}
             <span className="capitalize">{t(statusKey)}</span>
           </p>
           {(event.groom_name || event.bride_name) && (
-            <p className="mt-1 text-sm text-zinc-600">
+            <p className="mt-1 text-sm text-muted">
               {event.groom_name} {event.bride_name ? `& ${event.bride_name}` : ""}
             </p>
           )}
           {event.honoree_name ? (
-            <p className="mt-1 text-sm text-zinc-600">{event.honoree_name}</p>
+            <p className="mt-1 text-sm text-muted">{event.honoree_name}</p>
           ) : null}
         </div>
         <EventStatusActions eventId={eventId} status={event.status} />
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-zinc-200 bg-white p-4">
-          <p className="text-sm text-zinc-500">{t("admin.guests")}</p>
+        <div className="rounded-xl border border-border-gold surface-card p-4">
+          <p className="text-sm text-muted">{t("admin.guests")}</p>
           <p className="text-2xl font-semibold">{guests.length}</p>
         </div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4">
-          <p className="text-sm text-zinc-500">{t("admin.confirmed")}</p>
+        <div className="rounded-xl border border-border-gold surface-card p-4">
+          <p className="text-sm text-muted">{t("admin.confirmed")}</p>
           <p className="text-2xl font-semibold">{confirmed}</p>
         </div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4">
-          <p className="text-sm text-zinc-500">{t("admin.checkedIn")}</p>
+        <div className="rounded-xl border border-border-gold surface-card p-4">
+          <p className="text-sm text-muted">{t("admin.checkedIn")}</p>
           <p className="text-2xl font-semibold">{checkedIn}</p>
         </div>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-zinc-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-zinc-900">{t("admin.eventDetails")}</h2>
+        <div className="rounded-xl border border-border-gold surface-card p-6">
+          <h2 className="text-lg font-semibold text-gold-light">{t("admin.eventDetails")}</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">{t("admin.start")}</dt>
+              <dt className="text-muted">{t("admin.start")}</dt>
               <dd>
                 {formatDateTime(event.start_datetime ?? event.event_date, locale)}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">{t("admin.end")}</dt>
+              <dt className="text-muted">{t("admin.end")}</dt>
               <dd>{formatDateTime(event.end_datetime, locale)}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">{t("admin.venue")}</dt>
+              <dt className="text-muted">{t("admin.venue")}</dt>
               <dd>{event.venue ?? event.location_name ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">{t("admin.colors")}</dt>
+              <dt className="text-muted">{t("admin.colors")}</dt>
               <dd className="flex items-center gap-2">
                 <span
                   className="inline-block h-4 w-4 rounded-full border"
@@ -114,7 +114,7 @@ export function AdminEventDetailClient({
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">{t("admin.customMessage")}</dt>
+              <dt className="text-muted">{t("admin.customMessage")}</dt>
               <dd className="max-w-xs truncate">{event.custom_message ?? "—"}</dd>
             </div>
           </dl>
@@ -123,7 +123,7 @@ export function AdminEventDetailClient({
               href={event.maps_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-block text-sm text-rose-600 hover:text-rose-700"
+              className="mt-4 inline-block text-sm text-gold hover:text-gold-light"
             >
               {t("admin.openMap")}
             </a>
@@ -133,16 +133,16 @@ export function AdminEventDetailClient({
         <GuestImportPanel eventId={eventId} />
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-xl border border-zinc-200 bg-white">
-        <div className="border-b border-zinc-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-zinc-900">{t("admin.guestList")}</h2>
+      <div className="mt-8 overflow-hidden rounded-xl border border-border-gold surface-card">
+        <div className="border-b border-border-gold px-6 py-4">
+          <h2 className="text-lg font-semibold text-gold-light">{t("admin.guestList")}</h2>
         </div>
         {guests.length === 0 ? (
-          <p className="px-6 py-8 text-sm text-zinc-500">{t("admin.noGuests")}</p>
+          <p className="px-6 py-8 text-sm text-muted">{t("admin.noGuests")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
-              <thead className="bg-zinc-50 text-zinc-500">
+              <thead className="bg-transparent text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t("admin.name")}</th>
                   <th className="px-4 py-3 font-medium">{t("admin.phone")}</th>
@@ -152,7 +152,7 @@ export function AdminEventDetailClient({
               </thead>
               <tbody>
                 {guests.map((guest) => (
-                  <tr key={guest.id} className="border-t border-zinc-100">
+                  <tr key={guest.id} className="border-t border-border-gold/50">
                     <td className="px-4 py-3">{guest.name}</td>
                     <td className="px-4 py-3">{guest.phone_number ?? "—"}</td>
                     <td className="px-4 py-3">{t(rsvpKey(guest.rsvp_status))}</td>
@@ -161,7 +161,7 @@ export function AdminEventDetailClient({
                         href={getGuestInvitationUrl(event.slug, guest.unique_token)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-rose-600 hover:text-rose-700"
+                        className="text-gold hover:text-gold-light"
                       >
                         {t("common.open")}
                       </a>

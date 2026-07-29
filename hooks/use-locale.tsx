@@ -11,7 +11,7 @@ import {
 } from "react";
 import {
   LOCALE_COOKIE,
-  isLocale,
+  DEFAULT_LOCALE,
   localeDirection,
   translate,
   type TranslationKey,
@@ -28,20 +28,13 @@ interface LocaleContextValue {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-function readCookieLocale(): Locale | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]*)`));
-  const value = match?.[1];
-  return isLocale(value) ? value : null;
-}
-
 function writeCookieLocale(locale: Locale) {
   document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
 }
 
 export function LocaleProvider({
   children,
-  defaultLocale = "ar",
+  defaultLocale = DEFAULT_LOCALE,
 }: {
   children: ReactNode;
   defaultLocale?: Locale;
@@ -49,22 +42,25 @@ export function LocaleProvider({
   const [locale, setLocaleState] = useState<Locale>(defaultLocale);
 
   useEffect(() => {
-    const saved = readCookieLocale();
-    if (saved) setLocaleState(saved);
-  }, []);
+    setLocaleState(defaultLocale);
+  }, [defaultLocale]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = localeDirection(locale);
-    writeCookieLocale(locale);
   }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
+    writeCookieLocale(next);
   }, []);
 
   const toggleLocale = useCallback(() => {
-    setLocaleState((current) => (current === "ar" ? "en" : "ar"));
+    setLocaleState((current) => {
+      const next = current === "ar" ? "en" : "ar";
+      writeCookieLocale(next);
+      return next;
+    });
   }, []);
 
   const t = useCallback(

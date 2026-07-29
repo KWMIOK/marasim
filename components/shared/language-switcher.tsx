@@ -7,7 +7,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
 
   return (
     <div
-      className={`inline-flex items-center rounded-lg border border-zinc-200 bg-white p-0.5 text-xs font-medium ${className ?? ""}`}
+      className={`inline-flex items-center rounded-lg border border-border-gold bg-surface p-0.5 text-xs font-medium ${className ?? ""}`}
       role="group"
       aria-label={t("common.language")}
     >
@@ -16,8 +16,8 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         onClick={() => setLocale("ar")}
         className={`rounded-md px-2.5 py-1.5 transition ${
           locale === "ar"
-            ? "bg-zinc-900 text-white"
-            : "text-zinc-600 hover:bg-zinc-50"
+            ? "bg-gold text-black"
+            : "text-muted hover:bg-gold/10 hover:text-gold-light"
         }`}
       >
         {t("common.arabic")}
@@ -27,8 +27,8 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         onClick={() => setLocale("en")}
         className={`rounded-md px-2.5 py-1.5 transition ${
           locale === "en"
-            ? "bg-zinc-900 text-white"
-            : "text-zinc-600 hover:bg-zinc-50"
+            ? "bg-gold text-black"
+            : "text-muted hover:bg-gold/10 hover:text-gold-light"
         }`}
       >
         {t("common.english")}

@@ -1,8 +1,10 @@
 import { type NextRequest } from "next/server";
+import { ensureLocaleCookie } from "@/lib/i18n/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  return updateSession(request);
+  const response = await updateSession(request);
+  return ensureLocaleCookie(request, response);
 }
 
 export const config = {

@@ -8,7 +8,7 @@ export function HostLayoutClient({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-full bg-zinc-50">
+    <div className="min-h-full">
       <AppHeader title={t("host.panel")} />
       <main>{children}</main>
     </div>

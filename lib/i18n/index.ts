@@ -3,6 +3,7 @@ import { dictionary as en } from "./dictionaries/en";
 import type { Locale } from "./types";
 
 export const LOCALE_COOKIE = "marasim_locale";
+export const DEFAULT_LOCALE: Locale = "ar";
 
 const dictionaries = { en, ar } as const;
 

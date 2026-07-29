@@ -22,12 +22,12 @@ export function AdminDashboardClient({
     <PageShell>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">{t("nav.dashboard")}</h1>
-          <p className="text-sm text-zinc-500">{t("admin.overview")}</p>
+          <h1 className="text-2xl font-semibold text-gold-light">{t("nav.dashboard")}</h1>
+          <p className="text-sm text-muted">{t("admin.overview")}</p>
         </div>
         <Link
           href={ROUTES.admin.newEvent}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+          className="rounded-lg btn-gold px-4 py-2 text-sm"
         >
           {t("admin.createEvent")}
         </Link>
@@ -43,7 +43,7 @@ export function AdminDashboardClient({
       <div className="mt-10">
         <Link
           href={ROUTES.admin.events}
-          className="text-sm font-medium text-rose-600 hover:text-rose-700"
+          className="text-sm font-medium text-gold hover:text-gold-light"
         >
           {t("admin.manageEvents")}
         </Link>

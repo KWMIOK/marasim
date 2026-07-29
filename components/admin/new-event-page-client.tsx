@@ -21,11 +21,11 @@ export function NewEventPageClient({
 
   return (
     <PageShell>
-      <Link href={ROUTES.admin.events} className="text-sm text-zinc-500 hover:text-zinc-700">
+      <Link href={ROUTES.admin.events} className="text-sm text-muted hover:text-foreground">
         {t("admin.backToEvents")}
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold text-zinc-900">{t("admin.createEventTitle")}</h1>
-      <p className="mt-1 text-sm text-zinc-500">{t("admin.createEventSubtitle")}</p>
+      <h1 className="mt-2 text-2xl font-semibold text-gold-light">{t("admin.createEventTitle")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("admin.createEventSubtitle")}</p>
 
       <div className="mt-8">
         <EventForm hosts={hosts} currentUserId={currentUserId} catalogs={catalogs} />

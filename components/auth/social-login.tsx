@@ -85,7 +85,7 @@ export function SocialLogin() {
         type="button"
         onClick={signInWithGoogle}
         disabled={loading !== null}
-        className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 bg-white py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="btn-outline-gold flex w-full items-center justify-center gap-3 rounded-lg py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleIcon />
         {loading === "google" ? t("auth.redirectingGoogle") : t("auth.continueGoogle")}
@@ -94,7 +94,7 @@ export function SocialLogin() {
       <button
         type="button"
         disabled
-        className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 text-sm font-medium text-zinc-400"
+        className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-lg border border-border-gold/50 bg-surface py-2.5 text-sm font-medium text-gold-muted"
       >
         <AppleIcon />
         {t("auth.continueApple")}
@@ -104,7 +104,7 @@ export function SocialLogin() {
       <button
         type="button"
         disabled
-        className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 text-sm font-medium text-zinc-400"
+        className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-lg border border-border-gold/50 bg-surface py-2.5 text-sm font-medium text-gold-muted"
       >
         <PhoneIcon />
         {t("auth.continuePhone")}
@@ -112,7 +112,7 @@ export function SocialLogin() {
       </button>
 
       {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-lg border border-red-500/30 bg-red-950/40 px-3 py-2 text-sm text-red-300">{error}</p>
       ) : null}
     </div>
   );

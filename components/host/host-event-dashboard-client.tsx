@@ -8,8 +8,8 @@ export function HostEventDashboardClient({ eventId }: { eventId: string }) {
 
   return (
     <PageShell>
-      <h1 className="text-2xl font-semibold text-zinc-900">{t("host.eventDashboard")}</h1>
-      <p className="mt-1 text-sm text-zinc-500">{t("host.eventIdLabel", { id: eventId })}</p>
+      <h1 className="text-2xl font-semibold text-gold-light">{t("host.eventDashboard")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("host.eventIdLabel", { id: eventId })}</p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label={t("host.totalGuests")} value="—" />
@@ -17,7 +17,7 @@ export function HostEventDashboardClient({ eventId }: { eventId: string }) {
         <StatCard label={t("admin.checkedIn")} value="—" />
       </div>
 
-      <p className="mt-8 text-sm text-zinc-500">{t("host.guestTableHint")}</p>
+      <p className="mt-8 text-sm text-muted">{t("host.guestTableHint")}</p>
     </PageShell>
   );
 }

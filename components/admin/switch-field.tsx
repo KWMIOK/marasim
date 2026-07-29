@@ -10,18 +10,18 @@ export function SwitchField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
+    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-border-gold bg-transparent px-4 py-3">
       <div>
-        <span className="text-sm font-medium text-zinc-800">{label}</span>
+        <span className="text-sm font-medium text-gold-light">{label}</span>
         {description ? (
-          <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
+          <p className="mt-0.5 text-xs text-muted">{description}</p>
         ) : null}
       </div>
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-4 w-4 rounded border-zinc-300 text-rose-600 focus:ring-rose-500"
+        className="mt-1 h-4 w-4 rounded border-border-gold text-gold focus:ring-gold"
       />
     </label>
   );

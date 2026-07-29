@@ -34,7 +34,7 @@ export function EventStatusActions({
         <button
           type="button"
           onClick={() => setStatus("draft")}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+          className="rounded-lg border border-border-gold px-4 py-2 text-sm text-foreground hover:bg-transparent"
         >
           {t("admin.unpublish")}
         </button>
@@ -43,7 +43,7 @@ export function EventStatusActions({
         <button
           type="button"
           onClick={() => setStatus("archived")}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+          className="rounded-lg border border-border-gold px-4 py-2 text-sm text-foreground hover:bg-transparent"
         >
           {t("admin.archive")}
         </button>

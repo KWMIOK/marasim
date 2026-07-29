@@ -25,7 +25,7 @@ export function RangeField({
     <div>
       <div className="flex items-center justify-between">
         <Label>{label}</Label>
-        <span className="text-xs font-medium text-zinc-600">{display}</span>
+        <span className="text-xs font-medium text-muted">{display}</span>
       </div>
       <input
         type="range"
@@ -34,7 +34,7 @@ export function RangeField({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-2 w-full accent-rose-600"
+        className="mt-2 w-full accent-gold"
       />
     </div>
   );

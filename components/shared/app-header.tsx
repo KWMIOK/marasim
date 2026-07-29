@@ -12,16 +12,14 @@ export function AppHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="border-b border-zinc-200 bg-white px-6 py-4">
+    <header className="border-b border-border-gold bg-surface/80 px-6 py-4 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div>
-          <Link href={ROUTES.home} className="text-lg font-semibold text-zinc-900">
+          <Link href={ROUTES.home} className="text-lg font-semibold text-gradient-gold">
             Marasim
           </Link>
-          <p className="text-sm text-zinc-500">{title}</p>
-          {subtitle ? (
-            <p className="text-xs text-zinc-400">{subtitle}</p>
-          ) : null}
+          <p className="text-sm text-muted">{title}</p>
+          {subtitle ? <p className="text-xs text-gold-muted">{subtitle}</p> : null}
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-3">{actions}</div> : null}
       </div>

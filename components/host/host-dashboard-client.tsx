@@ -8,8 +8,8 @@ export function HostDashboardClient() {
 
   return (
     <PageShell>
-      <h1 className="text-2xl font-semibold text-zinc-900">{t("host.yourEvents")}</h1>
-      <p className="mt-2 text-sm text-zinc-500">{t("host.yourEventsSubtitle")}</p>
+      <h1 className="text-2xl font-semibold text-gold-light">{t("host.yourEvents")}</h1>
+      <p className="mt-2 text-sm text-muted">{t("host.yourEventsSubtitle")}</p>
     </PageShell>
   );
 }

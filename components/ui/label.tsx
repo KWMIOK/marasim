@@ -6,9 +6,6 @@ export function Label({
   ...props
 }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
-    <label
-      className={cn("block text-sm font-medium text-zinc-700", className)}
-      {...props}
-    />
+    <label className={cn("block text-sm font-medium text-gold-light", className)} {...props} />
   );
 }

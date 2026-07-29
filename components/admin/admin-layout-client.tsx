@@ -12,14 +12,17 @@ function AdminNav() {
 
   return (
     <nav className="flex items-center gap-4 text-sm">
-      <Link href={ROUTES.admin.root} className="text-zinc-600 hover:text-zinc-900">
+      <Link href={ROUTES.admin.root} className="nav-link">
         {t("nav.dashboard")}
       </Link>
-      <Link href={ROUTES.admin.events} className="text-zinc-600 hover:text-zinc-900">
+      <Link href={ROUTES.admin.events} className="nav-link">
         {t("nav.events")}
       </Link>
-      <Link href={ROUTES.admin.settings} className="text-zinc-600 hover:text-zinc-900">
+      <Link href={ROUTES.admin.settings} className="nav-link">
         {t("nav.settings")}
+      </Link>
+      <Link href={ROUTES.admin.catalog} className="nav-link">
+        {t("nav.catalog")}
       </Link>
     </nav>
   );
@@ -35,7 +38,7 @@ export function AdminLayoutClient({
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-full bg-zinc-50">
+    <div className="min-h-full">
       <AppHeader
         title={t("admin.panel")}
         subtitle={subtitle ?? t("common.superAdmin")}

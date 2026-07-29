@@ -41,9 +41,9 @@ export function GuestImportPanel({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-zinc-900">{t("admin.importGuests")}</h2>
-      <p className="mt-1 text-sm text-zinc-500">{t("eventForm.guestImportDesc")}</p>
+    <div className="rounded-xl border border-border-gold surface-card p-6">
+      <h2 className="text-lg font-semibold text-gold-light">{t("admin.importGuests")}</h2>
+      <p className="mt-1 text-sm text-muted">{t("eventForm.guestImportDesc")}</p>
       <Input
         type="file"
         accept=".csv,.xlsx,.xls"
@@ -56,7 +56,7 @@ export function GuestImportPanel({ eventId }: { eventId: string }) {
         type="button"
         onClick={handleImport}
         disabled={!file || loading}
-        className="mt-4 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="mt-4 rounded-lg btn-gold px-4 py-2 text-sm disabled:opacity-60"
       >
         {loading ? t("guestImport.importing") : t("guestImport.importFile")}
       </button>

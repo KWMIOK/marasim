@@ -8,29 +8,38 @@ export function HomeContent() {
   const { t } = useTranslation();
 
   return (
-    <main className="flex min-h-full flex-col items-center justify-center bg-gradient-to-b from-zinc-50 to-white px-6 py-24">
-      <div className="max-w-xl text-center">
-        <p className="text-sm font-medium uppercase tracking-widest text-rose-500">
-          {t("home.tagline")}
-        </p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-900">
-          {t("home.title")}
+    <main className="flex min-h-[calc(100vh-5rem)] flex-col justify-end px-6 pb-6">
+      <div className="mx-auto w-full max-w-lg text-center">
+        <h1 className="text-3xl font-bold leading-snug text-gold-light sm:text-4xl">
+          <span className="block">{t("home.headline1")}</span>
+          <span className="block">{t("home.headline2")}</span>
         </h1>
-        <p className="mt-4 text-lg leading-relaxed text-zinc-600">{t("home.description")}</p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href={ROUTES.login}
-            className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-zinc-700"
-          >
-            {t("nav.signIn")}
+
+        <p className="mt-4 text-sm tracking-wide text-gold sm:text-base">
+          Luxury Digital Invitation &amp; Event Platform
+        </p>
+
+        <div className="mt-6" aria-hidden="true" />
+
+        <p className="text-base leading-relaxed text-muted sm:text-lg">
+          <span className="block">{t("home.description1")}</span>
+          <span className="block">{t("home.description2")}</span>
+        </p>
+
+        <Link
+          href={ROUTES.signup}
+          className="btn-gold mt-8 flex w-full flex-col items-center justify-center rounded-2xl px-6 py-4 text-center"
+        >
+          <span className="text-lg font-semibold leading-tight">{t("home.ctaArabic")}</span>
+          <span className="mt-0.5 text-sm font-medium opacity-90">Get Started</span>
+        </Link>
+
+        <p className="mt-5 text-sm text-muted">
+          {t("home.hasAccount")}{" "}
+          <Link href={ROUTES.login} className="text-gold-light underline underline-offset-4">
+            {t("home.signInLink")}
           </Link>
-          <Link
-            href={ROUTES.admin.root}
-            className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-          >
-            {t("nav.adminPanel")}
-          </Link>
-        </div>
+        </p>
       </div>
     </main>
   );

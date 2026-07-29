@@ -43,9 +43,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
-      {description ? <p className="mt-1 text-sm text-zinc-500">{description}</p> : null}
+    <section className="rounded-xl border border-border-gold surface-card p-6">
+      <h2 className="text-lg font-semibold text-gold-light">{title}</h2>
+      {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -350,7 +350,7 @@ export function EventForm({
             <button
               type="button"
               onClick={generateUrlSlug}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+              className="rounded-lg border border-border-gold px-4 py-2 text-sm hover:bg-transparent"
             >
               {t("eventForm.generateUrl")}
             </button>
@@ -364,7 +364,7 @@ export function EventForm({
               placeholder={autoSlug}
               className="mt-1"
             />
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-muted">
               {t("eventForm.urlPreview", { slug: slug.trim() || autoSlug || "your-slug" })}
             </p>
           </div>
@@ -444,14 +444,14 @@ export function EventForm({
           renderPreview={(item, selected) => (
             <div>
               <div
-                className={`mb-2 flex h-20 items-center justify-center rounded-lg bg-zinc-900 text-sm text-white ${
+                className={`mb-2 flex h-20 items-center justify-center rounded-lg bg-gold text-sm text-black ${
                   selected ? "animate-pulse" : ""
                 }`}
               >
                 {item.animation_key}
               </div>
               <p className="text-sm font-medium">{item.name}</p>
-              <p className="text-xs text-zinc-500">{item.description}</p>
+              <p className="text-xs text-muted">{item.description}</p>
             </div>
           )}
         />
@@ -643,10 +643,10 @@ export function EventForm({
       </Section>
 
       <Section title={t("eventForm.guestImport")}>
-        <p className="mb-4 text-sm text-zinc-500">{t("eventForm.guestImportDesc")}</p>
+        <p className="mb-4 text-sm text-muted">{t("eventForm.guestImportDesc")}</p>
         <Input type="file" accept=".csv,.xlsx,.xls" onChange={(e) => setGuestFile(e.target.files?.[0] ?? null)} />
         {guestFile ? (
-          <p className="mt-2 text-sm text-zinc-600">
+          <p className="mt-2 text-sm text-muted">
             {t("eventForm.selectedFile", { name: guestFile.name })}
           </p>
         ) : null}
@@ -657,7 +657,7 @@ export function EventForm({
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60"
+        className="rounded-lg btn-gold px-5 py-2.5 text-sm hover:brightness-110 disabled:opacity-60"
       >
         {loading ? t("eventForm.creating") : t("eventForm.createEvent")}
       </button>
