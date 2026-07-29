@@ -490,7 +490,7 @@ function CatalogSection({
       )}
 
       <div className="overflow-hidden rounded-xl border border-border-gold surface-card">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-full text-sm">
           <thead className="bg-transparent text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">{t("catalogAdmin.name")}</th>

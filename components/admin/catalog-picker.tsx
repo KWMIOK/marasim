@@ -51,7 +51,7 @@ export function CatalogPicker<T extends CatalogItem>({
               type="button"
               onClick={() => onChange(item.id)}
               className={cn(
-                "rounded-xl border p-3 text-left transition",
+                "rounded-xl border p-3 text-center transition",
                 selected
                   ? "border-gold bg-gold/10 ring-2 ring-gold"
                   : "border-border-gold surface-card hover:border-border-gold"

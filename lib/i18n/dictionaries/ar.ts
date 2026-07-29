@@ -109,6 +109,28 @@ export const dictionary = {
     corporate_vip: "VIP شركات",
     royal_occasion: "مناسبة ملكية",
   },
+  browseTemplates: {
+    title: "تصفح القوالب",
+    searchPlaceholder: "ابحث عن قالب",
+    tabs: {
+      ready: "قوالب جاهزة",
+      bespoke: "تصميم مخصص",
+    },
+    preview: "معاينة",
+    chooseTemplate: "اختر القالب",
+    previewTitle: "معاينة القالب",
+    previewHint: "ستظهر معاينة الدعوة هنا",
+    backToBrowse: "العودة للقوالب",
+    noResults: "لا توجد قوالب مطابقة لبحثك.",
+    customizeTitle: "خصص قالبك",
+    customizeSubtitle: 'لقد اخترت "{name}". خطوات التخصيص قادمة قريباً.',
+    status: {
+      new: "جديد",
+      most_selected: "الأكثر اختياراً",
+      popular: "شائع",
+      featured: "مميز",
+    },
+  },
   auth: {
     signInTitle: "تسجيل الدخول",
     signInSubtitle: "اختر طريقة المتابعة.",

@@ -14,8 +14,14 @@ import { useTranslation } from "@/hooks/use-locale";
 import type { TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils/cn";
 
-function buildCreateHref(category: EventCategory, occasion: OccasionTypeId | null, flow: "templates" | "custom") {
-  const params = new URLSearchParams({ category, flow });
+function buildTemplatesHref(category: EventCategory, occasion: OccasionTypeId | null) {
+  const params = new URLSearchParams({ category });
+  if (occasion) params.set("occasion", occasion);
+  return `${ROUTES.templates.browse}?${params.toString()}`;
+}
+
+function buildCustomHref(category: EventCategory, occasion: OccasionTypeId | null) {
+  const params = new URLSearchParams({ category, flow: "custom" });
   if (occasion) params.set("occasion", occasion);
   return `${ROUTES.create}?${params.toString()}`;
 }
@@ -111,14 +117,14 @@ export function ChooseOccasionContent({ category }: { category: EventCategory })
             title={t("chooseOccasion.readyTemplates.title")}
             description={t("chooseOccasion.readyTemplates.description")}
             buttonLabel={t("chooseOccasion.readyTemplates.cta")}
-            href={buildCreateHref(category, selectedOccasion, "templates")}
+            href={buildTemplatesHref(category, selectedOccasion)}
             disabled={!hasSelection}
           />
           <ProceedCard
             title={t("chooseOccasion.bespokeDesign.title")}
             description={t("chooseOccasion.bespokeDesign.description")}
             buttonLabel={t("chooseOccasion.bespokeDesign.cta")}
-            href={buildCreateHref(category, selectedOccasion, "custom")}
+            href={buildCustomHref(category, selectedOccasion)}
             disabled={!hasSelection}
             variant="gold"
           />

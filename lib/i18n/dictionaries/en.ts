@@ -110,6 +110,28 @@ export const dictionary = {
     corporate_vip: "Corporate VIP",
     royal_occasion: "Royal Occasion",
   },
+  browseTemplates: {
+    title: "Browse Templates",
+    searchPlaceholder: "Search a template",
+    tabs: {
+      ready: "Ready Templates",
+      bespoke: "Bespoke Design",
+    },
+    preview: "Preview",
+    chooseTemplate: "Choose template",
+    previewTitle: "Template Preview",
+    previewHint: "Live invitation preview will render here",
+    backToBrowse: "Back to templates",
+    noResults: "No templates match your search.",
+    customizeTitle: "Personalize your template",
+    customizeSubtitle: 'You selected "{name}". Customization steps are coming next.',
+    status: {
+      new: "New",
+      most_selected: "Most Selected",
+      popular: "Popular",
+      featured: "Featured",
+    },
+  },
   auth: {
     signInTitle: "Sign in",
     signInSubtitle: "Choose how you'd like to continue.",

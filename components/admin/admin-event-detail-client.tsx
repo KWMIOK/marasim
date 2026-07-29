@@ -141,7 +141,7 @@ export function AdminEventDetailClient({
           <p className="px-6 py-8 text-sm text-muted">{t("admin.noGuests")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+            <table className="min-w-full text-sm">
               <thead className="bg-transparent text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t("admin.name")}</th>

@@ -14,6 +14,7 @@ export function usesAppShell(pathname: string): boolean {
   return (
     (BOTTOM_NAV_ROUTES as readonly string[]).includes(pathname) ||
     pathname.startsWith("/occasions/") ||
+    pathname.startsWith("/templates") ||
     pathname.startsWith(ADMIN_ROUTES_PREFIX) ||
     pathname.startsWith(HOST_ROUTES_PREFIX) ||
     pathname === SCANNER_ROUTE

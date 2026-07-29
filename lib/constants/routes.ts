@@ -5,6 +5,11 @@ export const ROUTES = {
   occasions: "/occasions",
   occasionCategory: (category: string) => `/occasions/${category}`,
   create: "/create",
+  templates: {
+    browse: "/templates/browse",
+    preview: (id: string) => `/templates/${id}/preview`,
+    customize: (id: string) => `/templates/${id}/customize`,
+  },
   orders: "/orders",
   profile: "/profile",
   admin: {

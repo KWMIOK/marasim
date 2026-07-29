@@ -19,7 +19,7 @@ export function AppPageShell({
         className
       )}
     >
-      <div className="mx-auto w-full max-w-lg">{children}</div>
+      <div className="mx-auto w-full max-w-lg text-center">{children}</div>
     </main>
   );
 }

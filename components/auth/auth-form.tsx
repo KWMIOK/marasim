@@ -152,7 +152,7 @@ export function AuthForm() {
             value={phone}
             onChange={(e) => setPhone(formatKuwaitMobileInput(e.target.value))}
             placeholder="5XXXXXXX"
-            className="min-w-0 flex-1 bg-transparent px-4 py-4 text-left text-sm text-gold-light outline-none placeholder:text-gold-muted"
+            className="min-w-0 flex-1 bg-transparent px-4 py-4 text-sm text-gold-light outline-none placeholder:text-gold-muted"
             aria-label={t("auth.phonePlaceholder")}
           />
         </div>
