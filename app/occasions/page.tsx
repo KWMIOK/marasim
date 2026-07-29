@@ -1,5 +1,5 @@
-import { PlaceholderPageContent } from "@/components/pages/placeholder-page-content";
+import { ChooseEventTypeContent } from "@/components/pages/choose-event-type-content";
 
 export default function OccasionsPage() {
-  return <PlaceholderPageContent titleKey="bottomNav.occasions" />;
+  return <ChooseEventTypeContent />;
 }

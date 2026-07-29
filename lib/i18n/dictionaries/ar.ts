@@ -44,6 +44,71 @@ export const dictionary = {
     orders: "طلباتي",
     profile: "الملف الشخصي",
   },
+  chooseEventType: {
+    title: "اختر نوع مناسبتك",
+    subtitle:
+      "اختر الفئة المناسبة لمناسبتك، ثم تابع إلى القوالب الجاهزة أو اطلب تصميماً مخصصاً.",
+    personal: {
+      title: "مناسبات شخصية",
+    },
+    formal: {
+      title: "مناسبات رسمية",
+    },
+    vip: {
+      title: "مناسبات VIP",
+      subtitle: "مناسبات فاخرة مصممة خصيصاً",
+      cta: "اطلب تجربة خاصة",
+      followUp: "سنتواصل معك بعد إرسال النموذج.",
+    },
+    readyMadeTemplates: "قوالب جاهزة",
+    customDesign: "تصميم مخصص",
+    continue: "متابعة",
+    infoCard:
+      "بعد اختيار الفئة، يمكنك استكشاف القوالب الجاهزة أو تقديم طلب لتصميم مخصص.",
+  },
+  chooseOccasion: {
+    subtitle: "اختر نوع المناسبة، ثم حدد القوالب الجاهزة أو اطلب تصميماً مخصصاً.",
+    occasionTypes: "أنواع المناسبات",
+    howToProceed: "كيف تود المتابعة؟",
+    selectOccasionHint: "اختر نوع المناسبة أعلاه للمتابعة.",
+    personal: {
+      title: "مناسبات شخصية",
+    },
+    formal: {
+      title: "مناسبات رسمية",
+    },
+    vip: {
+      title: "مناسبات VIP",
+    },
+    readyTemplates: {
+      title: "قوالب جاهزة",
+      description: "تصفح دعوات مصممة باحتراف وخصصها فوراً",
+      cta: "تصفح القوالب",
+    },
+    bespokeDesign: {
+      title: "تصميم مخصص",
+      description: "اطلب تصميم دعوة مخصص وسيتواصل معك فريقنا.",
+      cta: "اطلب تصميم",
+    },
+  },
+  occasionTypes: {
+    reception: "استقبال",
+    dinner_party: "عشاء",
+    wedding: "زفاف",
+    graduation: "تخرج",
+    birthday: "عيد ميلاد",
+    family_occasion: "مناسبة عائلية",
+    engagement: "خطوبة",
+    katb_ktab: "كتب كتاب",
+    henna: "حفلة حناء",
+    corporate_event: "فعالية شركات",
+    gala_dinner: "عشاء رسمي",
+    formal_dinner: "عشاء رسمي",
+    private_celebration: "احتفال خاص",
+    exclusive_wedding: "زفاف حصري",
+    corporate_vip: "VIP شركات",
+    royal_occasion: "مناسبة ملكية",
+  },
   auth: {
     signInTitle: "تسجيل الدخول",
     signInSubtitle: "اختر طريقة المتابعة.",

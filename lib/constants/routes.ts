@@ -3,6 +3,7 @@ export const ROUTES = {
   login: "/login",
   signup: "/login?mode=signup",
   occasions: "/occasions",
+  occasionCategory: (category: string) => `/occasions/${category}`,
   create: "/create",
   orders: "/orders",
   profile: "/profile",

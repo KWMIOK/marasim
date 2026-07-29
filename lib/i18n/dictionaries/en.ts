@@ -44,6 +44,72 @@ export const dictionary = {
     orders: "My Orders",
     profile: "Profile",
   },
+  chooseEventType: {
+    title: "Choose Your Event Type",
+    subtitle:
+      "Select the category that fits your event, then continue to ready-made templates or request a custom design.",
+    personal: {
+      title: "Personal Events",
+    },
+    formal: {
+      title: "Formal Events",
+    },
+    vip: {
+      title: "VIP Events",
+      subtitle: "High-end bespoke occasions",
+      cta: "Request Private Experience",
+      followUp: "We will contact you after submitting the form.",
+    },
+    readyMadeTemplates: "Ready-made Templates",
+    customDesign: "Custom Design",
+    continue: "Continue",
+    infoCard:
+      "After selecting the category, you can explore ready-made templates or submit a request for a custom design.",
+  },
+  chooseOccasion: {
+    subtitle:
+      "Choose the type of occasion, then select ready templates or request a bespoke design.",
+    occasionTypes: "Occasion types",
+    howToProceed: "How would you like to proceed?",
+    selectOccasionHint: "Select an occasion type above to continue.",
+    personal: {
+      title: "Personal Occasions",
+    },
+    formal: {
+      title: "Formal Occasions",
+    },
+    vip: {
+      title: "VIP Events",
+    },
+    readyTemplates: {
+      title: "Ready Templates",
+      description: "Browse professionally designed invitations and personalize them instantly",
+      cta: "Browse Templates",
+    },
+    bespokeDesign: {
+      title: "Bespoke Design",
+      description: "Request a custom invitation design and our team will contact you.",
+      cta: "Request Design",
+    },
+  },
+  occasionTypes: {
+    reception: "Reception",
+    dinner_party: "Dinner Party",
+    wedding: "Wedding",
+    graduation: "Graduation",
+    birthday: "Birthday",
+    family_occasion: "Family Occasion",
+    engagement: "Engagement",
+    katb_ktab: "Katb Ktab",
+    henna: "Henna",
+    corporate_event: "Corporate Event",
+    gala_dinner: "Gala Dinner",
+    formal_dinner: "Formal Dinner",
+    private_celebration: "Private Celebration",
+    exclusive_wedding: "Exclusive Wedding",
+    corporate_vip: "Corporate VIP",
+    royal_occasion: "Royal Occasion",
+  },
   auth: {
     signInTitle: "Sign in",
     signInSubtitle: "Choose how you'd like to continue.",

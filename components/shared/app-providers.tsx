@@ -2,23 +2,25 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { AppBackButton } from "@/components/shared/app-back-button";
 import { BottomNav } from "@/components/shared/bottom-nav";
 import { PublicLanguageToggle } from "@/components/shared/public-language-toggle";
-import { BOTTOM_NAV_ROUTES, ROUTES } from "@/lib/constants/routes";
+import { showAuthenticatedBackButton, showPublicLanguageToggle, usesAppShell } from "@/lib/constants/app-shell";
+import { useAuthUser } from "@/hooks/use-auth-user";
+import { cn } from "@/lib/utils/cn";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const showBottomNav = BOTTOM_NAV_ROUTES.includes(
-    pathname as (typeof BOTTOM_NAV_ROUTES)[number]
-  );
-  const showPublicLanguageToggle =
-    pathname === ROUTES.home || pathname === ROUTES.login;
+  const { isAuthenticated } = useAuthUser();
+  const shell = usesAppShell(pathname);
+  const showBack = showAuthenticatedBackButton(pathname, isAuthenticated);
 
   return (
     <>
-      {showPublicLanguageToggle ? <PublicLanguageToggle /> : null}
-      <div className={showBottomNav ? "min-h-full pb-20" : "min-h-full"}>{children}</div>
-      {showBottomNav ? <BottomNav /> : null}
+      {showPublicLanguageToggle(pathname, isAuthenticated) ? <PublicLanguageToggle /> : null}
+      {showBack ? <AppBackButton /> : null}
+      <div className={cn("min-h-full", shell && "pb-20", showBack && "pt-14")}>{children}</div>
+      {shell ? <BottomNav /> : null}
     </>
   );
 }
