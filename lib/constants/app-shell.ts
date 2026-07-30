@@ -7,7 +7,7 @@ import {
 
 /** Routes that use the mobile app shell (bottom nav, gold theme, max-width content). */
 export function usesAppShell(pathname: string): boolean {
-  if (pathname.startsWith("/login") || pathname.startsWith("/auth/") || pathname.startsWith("/e/")) {
+  if (pathname.startsWith("/login") || pathname.startsWith("/auth/") || pathname.startsWith("/e/") || pathname.startsWith("/reception/")) {
     return false;
   }
 

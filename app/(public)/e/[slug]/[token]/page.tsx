@@ -1,4 +1,6 @@
-import { InvitationPreviewClient } from "@/components/invitation/invitation-preview-client";
+import { notFound } from "next/navigation";
+import { InvitationGuestContent } from "@/components/invitation/invitation-guest-content";
+import { getPublicGuestInvitation } from "@/lib/actions/guest-invitation";
 
 export default async function InvitationPage({
   params,
@@ -6,6 +8,11 @@ export default async function InvitationPage({
   params: Promise<{ slug: string; token: string }>;
 }) {
   const { slug, token } = await params;
+  const guest = await getPublicGuestInvitation(slug, token);
 
-  return <InvitationPreviewClient slug={slug} tokenPreview={token.slice(0, 8)} />;
+  if (!guest) {
+    notFound();
+  }
+
+  return <InvitationGuestContent guest={guest} />;
 }

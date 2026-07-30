@@ -5,6 +5,7 @@ import {
   type OccasionTypeId,
 } from "@/lib/events/categories";
 import { buildTemplateBrowseQuery } from "@/lib/templates/browse";
+import type { GeneratedInvitationLinks } from "@/lib/invitations/generate-links";
 import {
   DEFAULT_SELECTED_TEMPLATE_FORM,
   parseSelectedTemplateForm,
@@ -13,7 +14,13 @@ import {
 
 export type { SelectedTemplateFormState };
 
-export type OccasionFlowStep = "category" | "occasion" | "browse" | "preview" | "customize";
+export type OccasionFlowStep =
+  | "category"
+  | "occasion"
+  | "browse"
+  | "preview"
+  | "customize"
+  | "success";
 
 export type OccasionFlowBrowseState = {
   searchQuery: string;
@@ -29,6 +36,7 @@ export type OccasionFlowState = {
   templateId: string | null;
   browse: OccasionFlowBrowseState;
   customizeForm: SelectedTemplateFormState;
+  generatedLinks: GeneratedInvitationLinks | null;
 };
 
 export const OCCASION_FLOW_STORAGE_KEY = "marasim_occasion_flow";
@@ -47,6 +55,7 @@ export const DEFAULT_OCCASION_FLOW: OccasionFlowState = {
   templateId: null,
   browse: DEFAULT_OCCASION_FLOW_BROWSE,
   customizeForm: DEFAULT_SELECTED_TEMPLATE_FORM,
+  generatedLinks: null,
 };
 
 const ALL_OCCASION_TYPE_IDS = new Set<string>([
@@ -82,6 +91,7 @@ function parseOccasionFlow(value: unknown): OccasionFlowState | null {
   const record = value as Partial<OccasionFlowState> & {
     browse?: Partial<OccasionFlowBrowseState>;
     customizeForm?: Partial<SelectedTemplateFormState>;
+    generatedLinks?: Partial<GeneratedInvitationLinks> | null;
   };
 
   const step = record.step;
@@ -90,7 +100,8 @@ function parseOccasionFlow(value: unknown): OccasionFlowState | null {
     step !== "occasion" &&
     step !== "browse" &&
     step !== "preview" &&
-    step !== "customize"
+    step !== "customize" &&
+    step !== "success"
   ) {
     return null;
   }
@@ -115,6 +126,8 @@ function parseOccasionFlow(value: unknown): OccasionFlowState | null {
       typeof record.browse?.focusTemplateId === "string" ? record.browse.focusTemplateId : null,
   };
 
+  const generatedLinks = parseGeneratedLinks(record.generatedLinks);
+
   return {
     step,
     category,
@@ -122,6 +135,30 @@ function parseOccasionFlow(value: unknown): OccasionFlowState | null {
     templateId,
     browse,
     customizeForm: parseSelectedTemplateForm(record.customizeForm),
+    generatedLinks,
+  };
+}
+
+function parseGeneratedLinks(value: unknown): GeneratedInvitationLinks | null {
+  if (!value || typeof value !== "object") return null;
+
+  const record = value as Partial<GeneratedInvitationLinks>;
+  if (
+    typeof record.eventSlug !== "string" ||
+    typeof record.guestToken !== "string" ||
+    typeof record.receptionistToken !== "string" ||
+    typeof record.guestUrl !== "string" ||
+    typeof record.receptionistUrl !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    eventSlug: record.eventSlug,
+    guestToken: record.guestToken,
+    receptionistToken: record.receptionistToken,
+    guestUrl: record.guestUrl,
+    receptionistUrl: record.receptionistUrl,
   };
 }
 
@@ -149,6 +186,8 @@ export function saveOccasionFlow(partial: Partial<OccasionFlowState>): OccasionF
     customizeForm: partial.customizeForm
       ? { ...current.customizeForm, ...partial.customizeForm }
       : current.customizeForm,
+    generatedLinks:
+      partial.generatedLinks !== undefined ? partial.generatedLinks : current.generatedLinks,
   };
 
   if (canUseStorage()) {
@@ -163,6 +202,18 @@ export function clearOccasionFlow() {
   sessionStorage.removeItem(OCCASION_FLOW_STORAGE_KEY);
 }
 
+export function resetOccasionFlowAfterSuccess() {
+  return saveOccasionFlow({
+    step: "category",
+    category: null,
+    occasion: null,
+    templateId: null,
+    browse: DEFAULT_OCCASION_FLOW_BROWSE,
+    customizeForm: DEFAULT_SELECTED_TEMPLATE_FORM,
+    generatedLinks: null,
+  });
+}
+
 export function isOccasionFlowPath(pathname: string): boolean {
   return (
     pathname === ROUTES.occasions ||
@@ -173,6 +224,10 @@ export function isOccasionFlowPath(pathname: string): boolean {
 
 export function getOccasionFlowResumePath(state: OccasionFlowState | null): string {
   if (!state) return ROUTES.occasions;
+
+  if (state.step === "success") {
+    return ROUTES.occasions;
+  }
 
   const query = buildTemplateBrowseQuery({
     category: state.category,

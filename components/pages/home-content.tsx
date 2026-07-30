@@ -2,11 +2,30 @@
 
 import Link from "next/link";
 import { AppPageShell } from "@/components/shared/app-page-shell";
+import { useAuthUser } from "@/hooks/use-auth-user";
 import { useTranslation } from "@/hooks/use-locale";
 import { ROUTES } from "@/lib/constants/routes";
 
-export function HomeContent() {
+type HomeContentProps = {
+  initialAuthenticated?: boolean;
+};
+
+export function HomeContent({ initialAuthenticated = false }: HomeContentProps) {
   const { t } = useTranslation();
+  const { isAuthenticated: clientAuthenticated, loading } = useAuthUser();
+  const isAuthenticated = initialAuthenticated || clientAuthenticated;
+
+  if (!isAuthenticated && loading) {
+    return (
+      <AppPageShell className="pt-16">
+        <p className="text-sm text-muted">{t("common.loading")}</p>
+      </AppPageShell>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <AppPageShell className="pt-16">{null}</AppPageShell>;
+  }
 
   return (
     <AppPageShell align="end" className="pt-16 text-center">

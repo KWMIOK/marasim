@@ -99,6 +99,19 @@ export interface CheckInLog {
   metadata: Record<string, unknown>;
 }
 
+export interface ReceptionSessionRow {
+  token: string;
+  event_display_name: string;
+  event_date: string | null;
+  occasion: string | null;
+  event_slug: string | null;
+  guest_token: string | null;
+  total_guests: number;
+  arrived_guests: number;
+  not_arrived_guests: number;
+  created_at: string;
+}
+
 export interface EventAnalytics {
   event_id: string;
   total_guests: number;
@@ -183,6 +196,17 @@ export interface Database {
         Update: Partial<CheckInLog>;
         Relationships: DefaultRelationship[];
       };
+      reception_sessions: {
+        Row: ReceptionSessionRow;
+        Insert: Omit<ReceptionSessionRow, "created_at" | "total_guests" | "arrived_guests" | "not_arrived_guests"> & {
+          created_at?: string;
+          total_guests?: number;
+          arrived_guests?: number;
+          not_arrived_guests?: number;
+        };
+        Update: Partial<ReceptionSessionRow>;
+        Relationships: DefaultRelationship[];
+      };
     };
     Views: {
       event_analytics: {
@@ -210,6 +234,21 @@ export interface Database {
           p_token: string;
           p_gate_id?: string | null;
           p_staff_id?: string | null;
+        };
+        Returns: Json;
+      };
+      get_reception_session: {
+        Args: { p_token: string };
+        Returns: Json;
+      };
+      create_reception_session: {
+        Args: {
+          p_token: string;
+          p_event_display_name: string;
+          p_event_date: string | null;
+          p_occasion: string | null;
+          p_event_slug: string | null;
+          p_guest_token: string | null;
         };
         Returns: Json;
       };

@@ -10,6 +10,7 @@ import {
   type OccasionFlowBrowseState,
   type OccasionFlowState,
 } from "@/lib/flow/occasion-flow";
+import { migrateStuckSuccessFlowToHostInvitations } from "@/lib/invitations/migrate-stuck-flow";
 import { ROUTES } from "@/lib/constants/routes";
 
 export function useOccasionsNavHref() {
@@ -17,6 +18,11 @@ export function useOccasionsNavHref() {
   const [href, setHref] = useState<string>(ROUTES.occasions);
 
   useEffect(() => {
+    if (migrateStuckSuccessFlowToHostInvitations()) {
+      setHref(ROUTES.occasions);
+      return;
+    }
+
     setHref(getOccasionFlowResumePath(getOccasionFlow()));
   }, [pathname]);
 
@@ -31,6 +37,7 @@ export function useOccasionFlowPersistence({
   templateId,
   browse,
   customizeForm,
+  generatedLinks,
 }: Partial<OccasionFlowState> & { enabled?: boolean }) {
   useEffect(() => {
     if (!enabled) return;
@@ -42,6 +49,7 @@ export function useOccasionFlowPersistence({
       templateId,
       browse,
       customizeForm,
+      generatedLinks,
     });
   }, [
     enabled,
@@ -68,10 +76,13 @@ export function useOccasionFlowPersistence({
     customizeForm?.mapsLat,
     customizeForm?.mapsLng,
     customizeForm?.mapsUrl,
+    generatedLinks?.guestUrl,
+    generatedLinks?.receptionistUrl,
   ]);
 }
 
 export function isOccasionsNavActive(pathname: string): boolean {
+  if (pathname.includes("/success")) return false;
   return isOccasionFlowPath(pathname);
 }
 

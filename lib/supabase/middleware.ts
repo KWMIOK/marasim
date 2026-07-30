@@ -42,6 +42,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = pathname.startsWith("/login");
   const isAuthCallback = pathname.startsWith("/auth/callback");
   const isPublicInvitation = pathname.startsWith("/e/");
+  const isPublicReception = pathname.startsWith("/reception/");
   const isAdminRoute = pathname.startsWith(ADMIN_ROUTES_PREFIX);
   const isHostRoute = pathname.startsWith(HOST_ROUTES_PREFIX);
   const isScannerRoute = pathname === SCANNER_ROUTE;
@@ -77,6 +78,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (isPublicInvitation || isPublicReception) {
+    return supabaseResponse;
+  }
+
   if (user && (isAdminRoute || isHostRoute || isScannerRoute)) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -103,10 +108,6 @@ export async function updateSession(request: NextRequest) {
       url.pathname = role === "host" ? "/dashboard" : "/admin";
       return NextResponse.redirect(url);
     }
-  }
-
-  if (isPublicInvitation) {
-    return supabaseResponse;
   }
 
   return supabaseResponse;

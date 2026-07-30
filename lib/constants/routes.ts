@@ -9,6 +9,7 @@ export const ROUTES = {
     browse: "/templates/browse",
     preview: (id: string) => `/templates/${id}/preview`,
     customize: (id: string) => `/templates/${id}/customize`,
+    success: (id: string) => `/templates/${id}/success`,
   },
   orders: "/orders",
   profile: "/profile",
@@ -24,6 +25,14 @@ export const ROUTES = {
     dashboard: (eventId: string) => `/dashboard/${eventId}`,
   },
   invitation: (slug: string, token: string) => `/e/${slug}/${token}`,
+  reception: (token: string) => `/reception/${token}`,
+  receptionRegister: (token: string) => `/reception/${token}/register`,
+  receptionGuests: (token: string) => `/reception/${token}/guests`,
+  receptionReport: (token: string) => `/reception/${token}/report`,
+  receptionGuest: (token: string, guestToken: string) =>
+    `/reception/${token}/guest/${guestToken}`,
+  receptionGuestArrivalSuccess: (token: string, guestToken: string) =>
+    `/reception/${token}/guest/${guestToken}/arrival-success`,
   scanner: "/scanner",
 } as const;
 

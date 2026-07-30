@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { AppDatePickerField } from "@/components/templates/app-date-picker";
 import { AppLocationField } from "@/components/templates/app-location-field";
@@ -34,7 +34,11 @@ import {
 } from "@/lib/templates/selected-template-form";
 import { LANGUAGE_OPTIONS } from "@/lib/events/constants";
 import { isEventCategory } from "@/lib/events/categories";
-import { getOccasionFlow, isOccasionTypeId } from "@/lib/flow/occasion-flow";
+import { getOccasionFlow, isOccasionTypeId, resetOccasionFlowAfterSuccess } from "@/lib/flow/occasion-flow";
+import { generateInvitationLinks } from "@/lib/invitations/generate-links";
+import { buildInvitationSuccessPath, saveHostInvitation } from "@/lib/invitations/host-invitations";
+import { createReceptionSession } from "@/lib/actions/reception";
+import { buildEventDisplayName } from "@/lib/reception/session";
 import { useOccasionFlowPersistence } from "@/hooks/use-occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
@@ -76,9 +80,12 @@ function readSavedForm(): SelectedTemplateFormState {
 
 export function TemplateCustomizeContent({ template }: { template: InvitationAnimatedTemplate }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [form, setForm] = useState(DEFAULT_SELECTED_TEMPLATE_FORM);
   const [formHydrated, setFormHydrated] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const categoryParam = searchParams.get("category");
   const occasionParam = searchParams.get("occasion");
@@ -109,6 +116,53 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
     value: SelectedTemplateFormState[K]
   ) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handleUseTemplate() {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    const generatedLinks = generateInvitationLinks({
+      hostName: form.hostName,
+    });
+
+    const occasionLabel = occasion
+      ? t(`occasionTypes.${occasion}` as TranslationKey)
+      : null;
+    const eventDisplayName = buildEventDisplayName(form.hostName, occasionLabel);
+
+    const createResult = await createReceptionSession({
+      token: generatedLinks.receptionistToken,
+      eventDisplayName,
+      eventDate: form.date || null,
+      occasion,
+      eventSlug: generatedLinks.eventSlug,
+      guestToken: generatedLinks.guestToken,
+      guestQrEnabled: form.guestQr,
+    });
+
+    if (!createResult.success) {
+      setSubmitError(t("selectedTemplate.createFailed"));
+      setIsSubmitting(false);
+      return;
+    }
+
+    const invitation = saveHostInvitation({
+      templateId: template.id,
+      eventDisplayName,
+      eventDate: form.date || null,
+      category,
+      occasion,
+      guestUrl: generatedLinks.guestUrl,
+      receptionistUrl: generatedLinks.receptionistUrl,
+      guestQrEnabled: form.guestQr,
+    });
+
+    resetOccasionFlowAfterSuccess();
+
+    router.push(buildInvitationSuccessPath(invitation));
   }
 
   return (
@@ -257,10 +311,20 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
         >
           {t("selectedTemplate.previewInvitation")}
         </Link>
-        <button type="button" className="btn-gold rounded-xl px-3 py-3 text-sm font-medium">
-          {t("selectedTemplate.useTemplate")}
+        <button
+          type="button"
+          onClick={handleUseTemplate}
+          disabled={isSubmitting}
+          className="btn-gold rounded-xl px-3 py-3 text-sm font-medium disabled:opacity-60"
+        >
+          {isSubmitting ? t("hostSuccess.generating") : t("selectedTemplate.useTemplate")}
         </button>
       </div>
+      {submitError ? (
+        <p className="mt-3 text-sm text-red-400" role="alert">
+          {submitError}
+        </p>
+      ) : null}
     </AppPageShell>
   );
 }
