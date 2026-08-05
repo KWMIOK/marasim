@@ -29,6 +29,7 @@ import type {
   InvitationLanguage,
 } from "@/types/events";
 import type { ContentSlot, Profile, TemplateType } from "@/types/database";
+import { getCatalogDescription, getCatalogName } from "@/lib/catalog/localized";
 import { useTranslation } from "@/hooks/use-locale";
 
 type HostOption = Pick<Profile, "id" | "full_name" | "role">;
@@ -61,7 +62,7 @@ export function EventForm({
   catalogs: EventCatalogs;
 }) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const [eventType, setEventType] = useState<CeremonyEventType>("wedding");
   const [groomName, setGroomName] = useState("");
@@ -450,8 +451,8 @@ export function EventForm({
               >
                 {item.animation_key}
               </div>
-              <p className="text-sm font-medium">{item.name}</p>
-              <p className="text-xs text-muted">{item.description}</p>
+              <p className="text-sm font-medium">{getCatalogName(item, locale)}</p>
+              <p className="text-xs text-muted">{getCatalogDescription(item, locale)}</p>
             </div>
           )}
         />
@@ -509,7 +510,7 @@ export function EventForm({
                 <p className="text-xl" style={{ fontFamily: item.font_family }}>
                   {invitationLanguage === "ar" ? "محمد & سارة" : "Mohammed & Sara"}
                 </p>
-                <p className="mt-1 text-sm font-medium">{item.name}</p>
+                <p className="mt-1 text-sm font-medium">{getCatalogName(item, locale)}</p>
               </div>
             )}
           />
@@ -548,7 +549,7 @@ export function EventForm({
                   className="inline-block h-8 w-8 rounded-full border"
                   style={{ backgroundColor: item.color_hex }}
                 />
-                <span className="text-sm font-medium">{item.name}</span>
+                <span className="text-sm font-medium">{getCatalogName(item, locale)}</span>
               </div>
             )}
           />

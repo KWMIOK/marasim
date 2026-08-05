@@ -15,12 +15,22 @@ export async function syncProfileFromOAuth(
   const avatarUrl =
     user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null;
 
+  const patch: Record<string, string | null> = {
+    full_name: fullName,
+    avatar_url: avatarUrl,
+  };
+
+  if (user.email) {
+    patch.email = user.email;
+  }
+
+  if (user.phone) {
+    patch.phone = user.phone;
+  }
+
   await supabase
     .from("profiles")
-    .update({
-      full_name: fullName,
-      avatar_url: avatarUrl,
-    } as never)
+    .update(patch as never)
     .eq("id", user.id);
 }
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { getProfile } from "@/lib/auth/session";
 import type { ReceptionSession } from "@/lib/reception/session";
 import {
   parseReceptionGuestDetail,
@@ -12,6 +13,8 @@ import {
   parseReceptionistUrl,
 } from "@/lib/invitations/parse-invitation-urls";
 
+import { generateEmergencyPasscode } from "@/lib/reception/staff-session";
+
 export type CreateReceptionSessionInput = {
   token: string;
   eventDisplayName: string;
@@ -20,10 +23,17 @@ export type CreateReceptionSessionInput = {
   eventSlug: string;
   guestToken: string;
   guestQrEnabled?: boolean;
+  receptionStaffCount?: number;
+  locationName?: string | null;
+  locationDirections?: string | null;
+  mapsLat?: number | null;
+  mapsLng?: number | null;
+  mapsUrl?: string | null;
+  eventLogoUrl?: string | null;
 };
 
 export type CreateReceptionSessionResult =
-  | { success: true }
+  | { success: true; emergencyPasscode?: string }
   | { success: false; error: string };
 
 function parseReceptionSession(value: unknown): ReceptionSession | null {
@@ -86,6 +96,10 @@ export async function createReceptionSession(
       return { success: false, error: "Supabase is not configured." };
     }
 
+    const profile = await getProfile();
+    const staffLimit = Math.min(20, Math.max(0, Math.round(input.receptionStaffCount ?? 0)));
+    const emergencyPasscodePlain = generateEmergencyPasscode();
+
     const response = await fetch(`${url}/rest/v1/rpc/create_reception_session`, {
       method: "POST",
       headers: {
@@ -101,6 +115,15 @@ export async function createReceptionSession(
         p_event_slug: input.eventSlug,
         p_guest_token: input.guestToken,
         p_guest_qr_enabled: input.guestQrEnabled ?? true,
+        p_reception_staff_limit: staffLimit,
+        p_host_profile_id: profile?.id ?? null,
+        p_emergency_passcode_plain: emergencyPasscodePlain,
+        p_location_name: input.locationName?.trim() || null,
+        p_location_directions: input.locationDirections?.trim() || null,
+        p_maps_lat: input.mapsLat ?? null,
+        p_maps_lng: input.mapsLng ?? null,
+        p_maps_url: input.mapsUrl?.trim() || null,
+        p_event_logo_url: input.eventLogoUrl ?? null,
       }),
     });
 
@@ -108,7 +131,11 @@ export async function createReceptionSession(
       return { success: false, error: await response.text() };
     }
 
-    return { success: true };
+    const payload = (await response.json()) as { ok?: boolean; created?: boolean };
+    return {
+      success: true,
+      emergencyPasscode: payload.created ? emergencyPasscodePlain : undefined,
+    };
   } catch (error) {
     return {
       success: false,
@@ -123,10 +150,20 @@ export async function ensureReceptionSessionForInvitation(input: {
   occasion: string | null;
   guestUrl: string;
   receptionistUrl: string;
+  receptionSessionToken?: string | null;
   guestQrEnabled?: boolean;
+  receptionStaffCount?: number;
+  locationName?: string | null;
+  locationDirections?: string | null;
+  mapsLat?: number | null;
+  mapsLng?: number | null;
+  mapsUrl?: string | null;
+  eventLogoUrl?: string | null;
 }): Promise<CreateReceptionSessionResult> {
-  const receptionistToken = parseReceptionistUrl(input.receptionistUrl);
+  const receptionistToken =
+    parseReceptionistUrl(input.receptionistUrl) ?? input.receptionSessionToken ?? null;
   const guest = parseGuestInvitationUrl(input.guestUrl);
+  const isPrivateEvent = input.guestQrEnabled !== false;
 
   if (!receptionistToken || !guest) {
     return { success: false, error: "Invalid invitation links." };
@@ -140,6 +177,13 @@ export async function ensureReceptionSessionForInvitation(input: {
     eventSlug: guest.eventSlug,
     guestToken: guest.guestToken,
     guestQrEnabled: input.guestQrEnabled ?? true,
+    receptionStaffCount: isPrivateEvent ? (input.receptionStaffCount ?? 0) : 0,
+    locationName: input.locationName ?? null,
+    locationDirections: input.locationDirections ?? null,
+    mapsLat: input.mapsLat ?? null,
+    mapsLng: input.mapsLng ?? null,
+    mapsUrl: input.mapsUrl ?? null,
+    eventLogoUrl: input.eventLogoUrl ?? null,
   });
 }
 

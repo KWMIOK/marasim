@@ -29,18 +29,22 @@ export function buildReceptionistLink(token: string, origin: string) {
 export function generateInvitationLinks(input: {
   hostName: string;
   origin?: string;
+  includeReceptionistLink?: boolean;
 }): GeneratedInvitationLinks {
   const origin = input.origin ?? getAppOriginFromRequest();
   const slugBase = slugify(input.hostName.trim()) || "occasion";
   const eventSlug = `${slugBase}-${createToken().slice(0, 8)}`;
   const guestToken = createToken();
   const receptionistToken = createToken();
+  const includeReceptionistLink = input.includeReceptionistLink !== false;
 
   return {
     eventSlug,
     guestToken,
     receptionistToken,
     guestUrl: buildGuestInvitationLink(eventSlug, guestToken, origin),
-    receptionistUrl: buildReceptionistLink(receptionistToken, origin),
+    receptionistUrl: includeReceptionistLink
+      ? buildReceptionistLink(receptionistToken, origin)
+      : "",
   };
 }

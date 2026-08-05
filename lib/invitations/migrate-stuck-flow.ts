@@ -19,8 +19,22 @@ export function migrateStuckSuccessFlowToHostInvitations(): boolean {
     category: flow.category,
     occasion: flow.occasion,
     guestUrl: flow.generatedLinks.guestUrl,
-    receptionistUrl: flow.generatedLinks.receptionistUrl,
+    receptionistUrl: flow.customizeForm.guestQr ? flow.generatedLinks.receptionistUrl : "",
+    receptionSessionToken: flow.generatedLinks.receptionistToken,
     guestQrEnabled: flow.customizeForm.guestQr,
+    receptionStaffCount: flow.customizeForm.guestQr ? (flow.customizeForm.receptionStaffCount ?? 0) : 0,
+    location: flow.customizeForm.location,
+    locationDirections: flow.customizeForm.locationDirections,
+    mapsLat: flow.customizeForm.mapsLat,
+    mapsLng: flow.customizeForm.mapsLng,
+    mapsUrl: flow.customizeForm.mapsUrl,
+    eventLogoUrl: flow.customizeForm.eventLogoUrl,
+    noKidsAllowed: flow.customizeForm.noKidsAllowed,
+    dressCode: flow.customizeForm.dressCode,
+    menOnly: flow.customizeForm.menOnly,
+    womenOnly: flow.customizeForm.womenOnly,
+    couplesOnly: flow.customizeForm.couplesOnly,
+    noPhotos: flow.customizeForm.noPhotos,
   });
 
   resetOccasionFlowAfterSuccess();

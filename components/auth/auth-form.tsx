@@ -8,6 +8,7 @@ import { formatKuwaitMobileInput, isValidKuwaitMobile } from "@/lib/phone/kuwait
 import { useTranslation } from "@/hooks/use-locale";
 import { getAuthCallbackUrl } from "@/lib/utils/app-origin";
 import { ROUTES } from "@/lib/constants/routes";
+import { AdminAccessRequestButton } from "@/components/auth/admin-access-request-button";
 
 function GoogleIcon() {
   return (
@@ -68,15 +69,20 @@ export function AuthForm() {
     errorParam === "auth_callback_failed" ? t("auth.signInFailed") : null
   );
   const [loading, setLoading] = useState<"google" | null>(null);
+  const [adminRequestOnSignup, setAdminRequestOnSignup] = useState(false);
 
   const phoneValid = isValidKuwaitMobile(phone);
 
-  async function signInWithGoogle() {
+  async function signInWithGoogle(requestAdmin = false) {
     setError(null);
     setLoading("google");
 
     const supabase = createClient();
-    const callbackUrl = getAuthCallbackUrl(undefined, redirectTo);
+    const callbackUrl = getAuthCallbackUrl(
+      undefined,
+      redirectTo,
+      requestAdmin ? { admin_request: "1" } : undefined
+    );
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -109,7 +115,7 @@ export function AuthForm() {
       <div className="mt-8 space-y-3">
         <button
           type="button"
-          onClick={signInWithGoogle}
+          onClick={() => signInWithGoogle(adminRequestOnSignup)}
           disabled={loading !== null}
           className="btn-auth-dark flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -171,6 +177,14 @@ export function AuthForm() {
         <p className="mt-4 rounded-lg border border-red-500/30 bg-red-950/40 px-3 py-2 text-sm text-red-300">
           {error}
         </p>
+      ) : null}
+
+      {isSignup ? (
+        <AdminAccessRequestButton
+          phone={phoneValid ? phone : undefined}
+          onRequestAdminOAuth={() => setAdminRequestOnSignup(true)}
+          oauthPending={loading === "google" && adminRequestOnSignup}
+        />
       ) : null}
 
       <p className="mt-8 text-center text-sm text-muted">

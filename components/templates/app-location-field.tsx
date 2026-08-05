@@ -6,6 +6,7 @@ import { LocationPickerModal, type LocationPickerValue } from "@/components/temp
 import {
   InvitationDetailField,
   InvitationDetailInput,
+  InvitationDetailTextarea,
 } from "@/components/templates/selected-template-form";
 import { useTranslation } from "@/hooks/use-locale";
 
@@ -13,17 +14,21 @@ export function AppLocationField({
   label,
   htmlFor,
   location,
+  locationDirections,
   mapsLat,
   mapsLng,
   onLocationChange,
+  onLocationDirectionsChange,
   onMapChange,
 }: {
   label: string;
   htmlFor: string;
   location: string;
+  locationDirections: string;
   mapsLat: number | null;
   mapsLng: number | null;
   onLocationChange: (value: string) => void;
+  onLocationDirectionsChange: (value: string) => void;
   onMapChange: (value: LocationPickerValue) => void;
 }) {
   const { t } = useTranslation();
@@ -56,6 +61,19 @@ export function AppLocationField({
           <p className="mt-2 text-xs text-muted">{t("selectedTemplate.locationPinSet")}</p>
         ) : null}
         <p className="mt-1 text-xs text-gold-muted">{t("selectedTemplate.locationGuestHint")}</p>
+
+        <label htmlFor={`${htmlFor}-directions`} className="mt-4 block text-xs font-medium text-gold-light">
+          {t("selectedTemplate.locationDirections")}
+        </label>
+        <InvitationDetailTextarea
+          id={`${htmlFor}-directions`}
+          value={locationDirections}
+          onChange={(event) => onLocationDirectionsChange(event.target.value)}
+          placeholder={t("selectedTemplate.locationDirectionsPlaceholder")}
+          rows={3}
+          className="mt-2"
+        />
+        <p className="mt-1.5 text-xs text-gold-muted">{t("selectedTemplate.locationDirectionsHint")}</p>
       </InvitationDetailField>
 
       <LocationPickerModal

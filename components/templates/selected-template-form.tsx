@@ -1,9 +1,10 @@
 "use client";
 
-import { forwardRef, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useRef, useState, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react";
 import { AppColorPickerModal } from "@/components/templates/app-color-picker";
 import { normalizeHex, parseColorHex } from "@/lib/color/utils";
 import { useTranslation } from "@/hooks/use-locale";
+import { AppSwitch } from "@/components/shared/app-switch";
 import { cn } from "@/lib/utils/cn";
 
 function openNativePicker(input: HTMLInputElement | null) {
@@ -194,6 +195,22 @@ export const InvitationDetailInput = forwardRef<HTMLInputElement, InputHTMLAttri
   }
 );
 
+export const InvitationDetailTextarea = forwardRef<
+  HTMLTextAreaElement,
+  TextareaHTMLAttributes<HTMLTextAreaElement>
+>(function InvitationDetailTextarea({ className, ...props }, ref) {
+  return (
+    <textarea
+      ref={ref}
+      className={cn(
+        "min-h-[5.5rem] w-full resize-y rounded-xl border border-border-gold bg-surface px-3 py-2.5 text-sm leading-relaxed text-gold-light outline-none placeholder:text-gold-muted focus:ring-2 focus:ring-gold/40",
+        className
+      )}
+      {...props}
+    />
+  );
+});
+
 export function InvitationDetailPickerInput({
   type,
   className,
@@ -342,41 +359,33 @@ function TemplateSwitchControl({
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
-  return (
-    <button
-      id={id}
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "relative h-8 w-14 shrink-0 rounded-full border border-border-gold transition-colors",
-        checked ? "bg-gold/20" : "bg-surface"
-      )}
-    >
-      <span
-        className={cn(
-          "absolute top-0.5 h-6 w-6 rounded-full transition-all",
-          checked ? "start-7 bg-gold shadow-sm shadow-gold/40" : "start-0.5 bg-border-gold"
-        )}
-      />
-    </button>
-  );
+  return <AppSwitch id={id} checked={checked} onChange={onChange} />;
 }
 
 export function TemplateSwitchField({
   label,
+  labelWhenChecked,
+  labelWhenUnchecked,
   htmlFor,
   icon,
   checked,
   onChange,
 }: {
-  label: string;
+  label?: string;
+  labelWhenChecked?: string;
+  labelWhenUnchecked?: string;
   htmlFor: string;
   icon: ReactNode;
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
+  const displayLabel =
+    labelWhenChecked !== undefined && labelWhenUnchecked !== undefined
+      ? checked
+        ? labelWhenChecked
+        : labelWhenUnchecked
+      : (label ?? "");
+
   return (
     <div className="surface-card rounded-2xl p-4 shadow-lg shadow-black/20">
       <div className="flex items-center justify-between gap-3">
@@ -385,7 +394,7 @@ export function TemplateSwitchField({
             {icon}
           </span>
           <label htmlFor={htmlFor} className="text-sm font-medium text-gold-light">
-            {label}
+            {displayLabel}
           </label>
         </div>
         <TemplateSwitchControl id={htmlFor} checked={checked} onChange={onChange} />

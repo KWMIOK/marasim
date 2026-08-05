@@ -9,6 +9,7 @@ import { isEventCategory } from "@/lib/events/categories";
 import { isOccasionTypeId, saveOccasionFlow } from "@/lib/flow/occasion-flow";
 import { useOccasionFlowPersistence } from "@/hooks/use-occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
+import { getCatalogDescription, getCatalogName } from "@/lib/catalog/localized";
 import { useTranslation } from "@/hooks/use-locale";
 import type { InvitationAnimatedTemplate } from "@/types/events";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -36,7 +37,7 @@ function PreviewBackground({ template }: { template: InvitationAnimatedTemplate 
 }
 
 export function TemplatePreviewContent({ template }: { template: InvitationAnimatedTemplate }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -80,7 +81,7 @@ export function TemplatePreviewContent({ template }: { template: InvitationAnima
     <AppPageShell className="pb-8">
       <header className="mb-4">
         <h1 className="text-2xl font-semibold text-gold-light">{t("browseTemplates.previewTitle")}</h1>
-        <p className="mt-1 text-sm text-muted">{template.name}</p>
+        <p className="mt-1 text-sm text-muted">{getCatalogName(template, locale)}</p>
       </header>
 
       <article className="relative min-h-[28rem] overflow-hidden rounded-2xl border border-border-gold shadow-xl shadow-black/30">
@@ -88,9 +89,11 @@ export function TemplatePreviewContent({ template }: { template: InvitationAnima
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
         <div className="absolute inset-x-0 bottom-0 p-6 text-center">
-          <h2 className="text-lg font-semibold text-gold-light">{template.name}</h2>
-          {template.description ? (
-            <p className="mt-2 text-sm leading-relaxed text-muted">{template.description}</p>
+          <h2 className="text-lg font-semibold text-gold-light">{getCatalogName(template, locale)}</h2>
+          {getCatalogDescription(template, locale) ? (
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              {getCatalogDescription(template, locale)}
+            </p>
           ) : null}
           <p className="mt-4 text-xs uppercase tracking-wide text-gold-muted">
             {t("browseTemplates.previewHint")}

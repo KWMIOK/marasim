@@ -2,10 +2,7 @@
 
 import Link from "next/link";
 import { AppPageShell } from "@/components/shared/app-page-shell";
-import {
-  ReceptionEntrancePicker,
-  ReceptionSyncStatus,
-} from "@/components/reception/reception-entrance-picker";
+import { ReceptionSyncStatus } from "@/components/reception/reception-entrance-picker";
 import { useReceptionSync } from "@/components/reception/reception-sync-provider";
 import { formatReceptionEventDate } from "@/lib/reception/session";
 import { ROUTES } from "@/lib/constants/routes";
@@ -94,8 +91,6 @@ export function ReceptionHomeContent() {
         <ReceptionStatBox label={t("reception.arrived")} value={session.arrivedGuests} href={reportHref} />
         <ReceptionStatBox label={t("reception.notArrived")} value={session.notArrivedGuests} href={reportHref} />
       </div>
-
-      <ReceptionEntrancePicker className="mt-4" />
 
       <div className="mt-6 space-y-3">
         {menuItems.map((item) => (

@@ -1,3 +1,4 @@
+import { getCatalogSearchText } from "@/lib/catalog/localized";
 import type { InvitationAnimatedTemplate } from "@/types/events";
 
 export type TemplateStatus = "new" | "most_selected" | "popular" | "featured";
@@ -27,11 +28,7 @@ export function filterTemplatesByName(templates: BrowseTemplate[], query: string
   const normalized = query.trim().toLowerCase();
   if (!normalized) return templates;
 
-  return templates.filter((template) => {
-    const name = template.name.toLowerCase();
-    const description = (template.description ?? "").toLowerCase();
-    return name.includes(normalized) || description.includes(normalized);
-  });
+  return templates.filter((template) => getCatalogSearchText(template).includes(normalized));
 }
 
 export function buildTemplateBrowseQuery(params: {

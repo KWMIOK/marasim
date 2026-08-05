@@ -13,16 +13,16 @@ function AdminNav() {
   return (
     <nav className="flex items-center gap-4 text-sm">
       <Link href={ROUTES.admin.root} className="nav-link">
-        {t("nav.dashboard")}
+        {t("admin.nav.dashboard")}
       </Link>
       <Link href={ROUTES.admin.events} className="nav-link">
-        {t("nav.events")}
+        {t("admin.nav.events")}
       </Link>
       <Link href={ROUTES.admin.settings} className="nav-link">
-        {t("nav.settings")}
+        {t("admin.nav.settings")}
       </Link>
       <Link href={ROUTES.admin.catalog} className="nav-link">
-        {t("nav.catalog")}
+        {t("admin.nav.catalog")}
       </Link>
     </nav>
   );

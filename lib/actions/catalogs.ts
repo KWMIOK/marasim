@@ -8,6 +8,7 @@ import {
   type CatalogInputMap,
   type CatalogKind,
 } from "@/lib/catalog/tables";
+import { normalizeCatalogInput, validateCatalogInput } from "@/lib/catalog/validate";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/constants/routes";
 
@@ -30,11 +31,17 @@ export async function createCatalogItem<K extends CatalogKind>(
 ): Promise<CatalogActionResult> {
   try {
     await requireSuperAdmin();
+    const validationError = validateCatalogInput(kind, input);
+    if (validationError) {
+      return { success: false, error: validationError };
+    }
+
+    const payload = normalizeCatalogInput(kind, input);
     const supabase = await createClient();
     const table = CATALOG_TABLES[kind];
 
     const { data, error } = await (supabase.from(table) as ReturnType<typeof supabase.from>)
-      .insert(input as never)
+      .insert(payload as never)
       .select("id")
       .single();
 
@@ -59,11 +66,17 @@ export async function updateCatalogItem<K extends CatalogKind>(
 ): Promise<CatalogActionResult> {
   try {
     await requireSuperAdmin();
+    const validationError = validateCatalogInput(kind, input);
+    if (validationError) {
+      return { success: false, error: validationError };
+    }
+
+    const payload = normalizeCatalogInput(kind, input);
     const supabase = await createClient();
     const table = CATALOG_TABLES[kind];
 
     const { error } = await (supabase.from(table) as ReturnType<typeof supabase.from>)
-      .update(input as never)
+      .update(payload as never)
       .eq("id", id);
 
     if (error) return { success: false, error: error.message };

@@ -35,6 +35,7 @@ export function BottomNav() {
             <Link
               key={item.labelKey}
               href={href}
+              replace={!active}
               className={cn(
                 "flex min-w-0 flex-1 flex-col items-center justify-center px-1 py-2 text-center text-xs transition",
                 active ? "text-gold-light" : "text-muted hover:text-gold-light"

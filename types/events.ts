@@ -48,8 +48,10 @@ export interface EventFormSettings extends EventDesignSettings {
 
 export interface InvitationAnimatedTemplate {
   id: string;
-  name: string;
-  description: string | null;
+  name_ar: string;
+  name_en: string;
+  description_ar: string;
+  description_en: string;
   preview_url: string | null;
   animation_key: string;
   is_active: boolean;
@@ -58,8 +60,10 @@ export interface InvitationAnimatedTemplate {
 
 export interface InvitationTheme {
   id: string;
-  name: string;
-  description: string | null;
+  name_ar: string;
+  name_en: string;
+  description_ar: string;
+  description_en: string;
   preview_url: string | null;
   primary_color: string;
   secondary_color: string;
@@ -70,7 +74,8 @@ export interface InvitationTheme {
 
 export interface InvitationFont {
   id: string;
-  name: string;
+  name_ar: string;
+  name_en: string;
   language: InvitationLanguage | "both";
   font_family: string;
   preview_url: string | null;
@@ -80,7 +85,8 @@ export interface InvitationFont {
 
 export interface InvitationFontColor {
   id: string;
-  name: string;
+  name_ar: string;
+  name_en: string;
   color_hex: string;
   is_active: boolean;
   sort_order: number;

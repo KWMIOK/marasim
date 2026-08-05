@@ -25,11 +25,13 @@ export function AppDatePickerField({
   htmlFor,
   value,
   onChange,
+  minDate,
 }: {
   label: string;
   htmlFor: string;
   value: string;
   onChange: (value: string) => void;
+  minDate?: string;
 }) {
   const { t, locale } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -88,6 +90,8 @@ export function AppDatePickerField({
     { month: "long", year: "numeric" }
   );
 
+  const draftDisabled = Boolean(minDate && draft && draft < minDate);
+
   return (
     <>
       <InvitationDetailField
@@ -111,6 +115,7 @@ export function AppDatePickerField({
         title={t("selectedTemplate.pickDate")}
         onClose={() => setOpen(false)}
         onConfirm={() => {
+          if (draftDisabled) return;
           onChange(draft);
           setOpen(false);
         }}
@@ -139,10 +144,15 @@ export function AppDatePickerField({
               <button
                 key={cell.iso}
                 type="button"
+                disabled={Boolean(minDate && cell.iso! < minDate)}
                 onClick={() => setDraft(cell.iso!)}
                 className={cn(
                   "rounded-lg py-2 text-sm transition",
-                  draft === cell.iso ? "btn-gold text-[#0a0a0a]" : "text-gold-light hover:bg-surface"
+                  minDate && cell.iso! < minDate
+                    ? "cursor-not-allowed text-muted/40"
+                    : draft === cell.iso
+                      ? "btn-gold text-[#0a0a0a]"
+                      : "text-gold-light hover:bg-surface"
                 )}
               >
                 {cell.day}

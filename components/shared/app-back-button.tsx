@@ -1,19 +1,36 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/use-locale";
-import { ROUTES } from "@/lib/constants/routes";
+import {
+  getNavSectionBackTarget,
+  getNavSectionRoot,
+} from "@/lib/navigation/nav-back";
 
-export function AppBackButton({ fallbackHref = ROUTES.home }: { fallbackHref?: string }) {
+function pathOnly(pathname: string): string {
+  return pathname.split("?")[0]?.split("#")[0] ?? pathname;
+}
+
+export function AppBackButton() {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useTranslation();
 
   function handleBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
+    const sectionTarget = getNavSectionBackTarget(pathname);
+    const destination = sectionTarget ?? getNavSectionRoot(pathname);
+    const currentPath = pathOnly(pathname);
+    const search =
+      typeof window !== "undefined" && sectionTarget?.startsWith("/templates/")
+        ? window.location.search
+        : "";
+    const fullDestination = search ? `${destination}${search}` : destination;
+
+    if (pathOnly(fullDestination) === currentPath) {
       return;
     }
-    router.push(fallbackHref);
+
+    router.push(fullDestination);
   }
 
   return (

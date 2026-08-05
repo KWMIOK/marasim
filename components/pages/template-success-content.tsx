@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { CopyLinkCard } from "@/components/templates/copy-link-card";
-import { getHostInvitation } from "@/lib/invitations/host-invitations";
+import { getHostInvitation, hasReceptionEmployeeLink, buildInvitationSharePath } from "@/lib/invitations/host-invitations";
 import { ensureReceptionSessionForInvitation } from "@/lib/actions/reception";
 import type { GeneratedInvitationLinks } from "@/lib/invitations/generate-links";
 import { ROUTES } from "@/lib/constants/routes";
@@ -43,11 +43,16 @@ export function TemplateSuccessContent({ templateId }: { templateId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [links, setLinks] = useState<GeneratedInvitationLinks | null>(null);
+  const [receptionStaffCount, setReceptionStaffCount] = useState(0);
+  const [emergencyPasscode, setEmergencyPasscode] = useState<string | null>(null);
+  const [showReceptionEmployeeLink, setShowReceptionEmployeeLink] = useState(false);
+  const [invitationId, setInvitationId] = useState<string | null>(null);
+  const [shareHref, setShareHref] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const invitationId = searchParams.get("invitation");
-    const savedInvitation = invitationId ? getHostInvitation(invitationId) : null;
+    const id = searchParams.get("invitation");
+    const savedInvitation = id ? getHostInvitation(id) : null;
 
     if (savedInvitation && savedInvitation.templateId === templateId) {
       void ensureReceptionSessionForInvitation({
@@ -56,7 +61,15 @@ export function TemplateSuccessContent({ templateId }: { templateId: string }) {
         occasion: savedInvitation.occasion,
         guestUrl: savedInvitation.guestUrl,
         receptionistUrl: savedInvitation.receptionistUrl,
+        receptionSessionToken: savedInvitation.receptionSessionToken,
         guestQrEnabled: savedInvitation.guestQrEnabled,
+        receptionStaffCount: savedInvitation.receptionStaffCount,
+        locationName: savedInvitation.location,
+        locationDirections: savedInvitation.locationDirections,
+        mapsLat: savedInvitation.mapsLat,
+        mapsLng: savedInvitation.mapsLng,
+        mapsUrl: savedInvitation.mapsUrl,
+        eventLogoUrl: savedInvitation.eventLogoUrl,
       });
 
       setLinks({
@@ -66,6 +79,11 @@ export function TemplateSuccessContent({ templateId }: { templateId: string }) {
         guestUrl: savedInvitation.guestUrl,
         receptionistUrl: savedInvitation.receptionistUrl,
       });
+      setReceptionStaffCount(savedInvitation.receptionStaffCount);
+      setEmergencyPasscode(savedInvitation.emergencyPasscode);
+      setShowReceptionEmployeeLink(hasReceptionEmployeeLink(savedInvitation));
+      setInvitationId(id);
+      setShareHref(buildInvitationSharePath(savedInvitation));
       setHydrated(true);
       return;
     }
@@ -99,16 +117,64 @@ export function TemplateSuccessContent({ templateId }: { templateId: string }) {
           description={t("hostSuccess.guestLinkDescription")}
           url={links.guestUrl}
           icon={<GuestLinkIcon />}
+          shareHref={shareHref ?? undefined}
         />
-        <CopyLinkCard
-          label={t("hostSuccess.receptionistLinkTitle")}
-          description={t("hostSuccess.receptionistLinkDescription")}
-          url={links.receptionistUrl}
-          icon={<ReceptionistLinkIcon />}
-        />
+        {showReceptionEmployeeLink ? (
+          <CopyLinkCard
+            label={t("hostSuccess.receptionistLinkTitle")}
+            description={t("hostSuccess.receptionistLinkDescription")}
+            url={links.receptionistUrl}
+            icon={<ReceptionistLinkIcon />}
+            notice={
+              receptionStaffCount > 0 ? (
+                <p className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-100/90">
+                  {t("hostSuccess.receptionistStaffLimitNotice", {
+                    count: String(receptionStaffCount),
+                  })}
+                </p>
+              ) : undefined
+            }
+          />
+        ) : null}
       </div>
 
+      {showReceptionEmployeeLink && emergencyPasscode ? (
+        <div className="surface-card mt-6 rounded-2xl p-5 shadow-lg shadow-black/20">
+          <h2 className="text-sm font-semibold text-gold-light">{t("hostSuccess.emergencyPinTitle")}</h2>
+          <p className="mt-2 text-xs text-muted">{t("hostSuccess.emergencyPinDescription")}</p>
+          <p dir="ltr" className="mt-3 font-mono text-2xl tracking-[0.4em] text-gold-light">
+            {emergencyPasscode}
+          </p>
+        </div>
+      ) : null}
+
+      {showReceptionEmployeeLink && invitationId ? (
+        <>
+          <Link
+            href={ROUTES.profileInvitationVendors(invitationId)}
+            className="btn-outline-gold mt-6 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-medium"
+          >
+            {t("hostSuccess.manageVendors")}
+          </Link>
+          <Link
+            href={ROUTES.profileInvitationStaff(invitationId)}
+            className="btn-outline-gold mt-3 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-medium"
+          >
+            {t("hostSuccess.manageReceptionStaff")}
+          </Link>
+        </>
+      ) : null}
+
       <p className="mt-6 text-xs text-gold-muted">{t("hostSuccess.invitationPending")}</p>
+
+      {invitationId ? (
+        <Link
+          href={ROUTES.profileInvitationGuests(invitationId)}
+          className="btn-outline-gold mt-6 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-medium"
+        >
+          {t("hostSuccess.viewGuests")}
+        </Link>
+      ) : null}
 
       <div className="mt-8 grid grid-cols-2 gap-3">
         <Link

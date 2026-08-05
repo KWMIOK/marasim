@@ -2,13 +2,21 @@
 
 import { signOut } from "@/lib/auth/actions";
 import { useTranslation } from "@/hooks/use-locale";
+import { cn } from "@/lib/utils/cn";
 
-export function SignOutButton() {
+type SignOutButtonProps = {
+  className?: string;
+};
+
+export function SignOutButton({ className }: SignOutButtonProps) {
   const { t } = useTranslation();
 
   return (
     <form action={signOut}>
-      <button type="submit" className="btn-outline-gold rounded-lg px-3 py-1.5 text-sm">
+      <button
+        type="submit"
+        className={cn("btn-outline-gold rounded-lg px-3 py-1.5 text-sm", className)}
+      >
         {t("nav.signOut")}
       </button>
     </form>

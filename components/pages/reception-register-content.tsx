@@ -8,9 +8,10 @@ import { ReceptionBackLink } from "@/components/reception/reception-back-link";
 import { ReceptionGuestAvatar } from "@/components/reception/reception-guest-avatar";
 import { ReceptionGuestSearchField } from "@/components/reception/reception-guest-search-field";
 import { QrScannerModal } from "@/components/scanner/qr-scanner-modal";
+import { VendorCounterModal } from "@/components/vendors/vendor-counter-modal";
 import { useReceptionSync } from "@/components/reception/reception-sync-provider";
 import { ROUTES } from "@/lib/constants/routes";
-import { parseGuestQrPayload } from "@/lib/qr/payload";
+import { parseGuestQrPayload, parseVendorQrPayload } from "@/lib/qr/payload";
 import {
   getGuestStatusDisplay,
   guestStatusToneClasses,
@@ -71,6 +72,8 @@ export function ReceptionRegisterContent() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [vendorModalOpen, setVendorModalOpen] = useState(false);
+  const [vendorMasterToken, setVendorMasterToken] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
 
   const trimmedQuery = query.trim();
@@ -94,6 +97,14 @@ export function ReceptionRegisterContent() {
 
   function handleQrScan(raw: string) {
     setScanError(null);
+
+    const vendorToken = parseVendorQrPayload(raw);
+    if (vendorToken) {
+      setVendorMasterToken(vendorToken);
+      setVendorModalOpen(true);
+      return;
+    }
+
     const guestToken = parseGuestQrPayload(raw);
 
     if (!guestToken) {
@@ -187,6 +198,15 @@ export function ReceptionRegisterContent() {
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
         onScan={handleQrScan}
+      />
+
+      <VendorCounterModal
+        open={vendorModalOpen}
+        masterToken={vendorMasterToken}
+        onClose={() => {
+          setVendorModalOpen(false);
+          setVendorMasterToken(null);
+        }}
       />
     </>
   );

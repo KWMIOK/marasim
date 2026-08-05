@@ -17,11 +17,18 @@ import type {
   ThemeInput,
 } from "@/lib/catalog/tables";
 import { CATALOG_KINDS } from "@/lib/catalog/tables";
+import { formatCatalogAdminLabel } from "@/lib/catalog/localized";
+import {
+  BilingualDescriptionFields,
+  BilingualNameFields,
+  isBilingualDescriptionComplete,
+  isBilingualNameComplete,
+} from "@/components/admin/bilingual-catalog-fields";
 import { PageShell } from "@/components/shared/page-shell";
+import { AppSwitch } from "@/components/shared/app-switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useTranslation } from "@/hooks/use-locale";
 import { ROUTES } from "@/lib/constants/routes";
 import type {
@@ -49,8 +56,10 @@ function emptyForm(kind: CatalogKind, sortOrder: number) {
   switch (kind) {
     case "animated_templates":
       return {
-        name: "",
-        description: "",
+        name_ar: "",
+        name_en: "",
+        description_ar: "",
+        description_en: "",
         preview_url: "",
         animation_key: "fade-rise",
         is_active: true,
@@ -58,8 +67,10 @@ function emptyForm(kind: CatalogKind, sortOrder: number) {
       } satisfies AnimatedTemplateInput;
     case "themes":
       return {
-        name: "",
-        description: "",
+        name_ar: "",
+        name_en: "",
+        description_ar: "",
+        description_en: "",
         preview_url: "",
         primary_color: "#1a1a2e",
         secondary_color: "#e94560",
@@ -69,7 +80,8 @@ function emptyForm(kind: CatalogKind, sortOrder: number) {
       } satisfies ThemeInput;
     case "fonts":
       return {
-        name: "",
+        name_ar: "",
+        name_en: "",
         language: "both" as const,
         font_family: "",
         preview_url: "",
@@ -78,7 +90,8 @@ function emptyForm(kind: CatalogKind, sortOrder: number) {
       } satisfies FontInput;
     case "font_colors":
       return {
-        name: "",
+        name_ar: "",
+        name_en: "",
         color_hex: "#c9a227",
         is_active: true,
         sort_order: sortOrder,
@@ -91,8 +104,10 @@ function itemToForm(kind: CatalogKind, item: CatalogItem) {
     case "animated_templates": {
       const row = item as InvitationAnimatedTemplate;
       return {
-        name: row.name,
-        description: row.description ?? "",
+        name_ar: row.name_ar,
+        name_en: row.name_en,
+        description_ar: row.description_ar,
+        description_en: row.description_en,
         preview_url: row.preview_url ?? "",
         animation_key: row.animation_key,
         is_active: row.is_active,
@@ -102,8 +117,10 @@ function itemToForm(kind: CatalogKind, item: CatalogItem) {
     case "themes": {
       const row = item as InvitationTheme;
       return {
-        name: row.name,
-        description: row.description ?? "",
+        name_ar: row.name_ar,
+        name_en: row.name_en,
+        description_ar: row.description_ar,
+        description_en: row.description_en,
         preview_url: row.preview_url ?? "",
         primary_color: row.primary_color,
         secondary_color: row.secondary_color,
@@ -115,7 +132,8 @@ function itemToForm(kind: CatalogKind, item: CatalogItem) {
     case "fonts": {
       const row = item as InvitationFont;
       return {
-        name: row.name,
+        name_ar: row.name_ar,
+        name_en: row.name_en,
         language: row.language,
         font_family: row.font_family,
         preview_url: row.preview_url ?? "",
@@ -126,13 +144,45 @@ function itemToForm(kind: CatalogKind, item: CatalogItem) {
     case "font_colors": {
       const row = item as InvitationFontColor;
       return {
-        name: row.name,
+        name_ar: row.name_ar,
+        name_en: row.name_en,
         color_hex: row.color_hex,
         is_active: row.is_active,
         sort_order: row.sort_order,
       } satisfies FontColorInput;
     }
   }
+}
+
+function isCatalogFormValid(
+  kind: CatalogKind,
+  form: AnimatedTemplateInput | ThemeInput | FontInput | FontColorInput
+) {
+  if (!isBilingualNameComplete(form.name_ar, form.name_en)) {
+    return false;
+  }
+
+  if (kind === "animated_templates" || kind === "themes") {
+    const withDescriptions = form as AnimatedTemplateInput | ThemeInput;
+    return isBilingualDescriptionComplete(
+      withDescriptions.description_ar,
+      withDescriptions.description_en
+    );
+  }
+
+  return true;
+}
+
+function mapCatalogError(t: (key: string) => string, error: string) {
+  if (error === "bilingual_names_required") {
+    return t("catalogAdmin.bilingualNamesRequired");
+  }
+
+  if (error === "bilingual_descriptions_required") {
+    return t("catalogAdmin.bilingualDescriptionsRequired");
+  }
+
+  return error;
 }
 
 function CatalogForm({
@@ -159,17 +209,14 @@ function CatalogForm({
       <h3 className="text-sm font-semibold text-gold-light">
         {isEdit ? t("catalogAdmin.editItem") : t("catalogAdmin.addItem")}
       </h3>
+      <p className="mt-1 text-xs text-muted">{t("catalogAdmin.bilingualHint")}</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div>
-          <Label>{t("catalogAdmin.name")}</Label>
-          <Input
-            value={form.name}
-            onChange={(e) => onChange({ ...form, name: e.target.value })}
-            className="mt-1"
-            required
-          />
-        </div>
-        <div>
+        <BilingualNameFields
+          nameAr={form.name_ar}
+          nameEn={form.name_en}
+          onChange={(patch) => onChange({ ...form, ...patch })}
+        />
+        <div className="sm:col-span-2">
           <Label>{t("catalogAdmin.sortOrder")}</Label>
           <Input
             type="number"
@@ -183,17 +230,11 @@ function CatalogForm({
 
         {kind === "animated_templates" && (
           <>
-            <div className="sm:col-span-2">
-              <Label>{t("catalogAdmin.description")}</Label>
-              <Textarea
-                value={(form as AnimatedTemplateInput).description ?? ""}
-                onChange={(e) =>
-                  onChange({ ...form, description: e.target.value } as typeof form)
-                }
-                rows={2}
-                className="mt-1"
-              />
-            </div>
+            <BilingualDescriptionFields
+              descriptionAr={(form as AnimatedTemplateInput).description_ar}
+              descriptionEn={(form as AnimatedTemplateInput).description_en}
+              onChange={(patch) => onChange({ ...form, ...patch } as typeof form)}
+            />
             <div>
               <Label>{t("catalogAdmin.animationKey")}</Label>
               <Input
@@ -220,17 +261,11 @@ function CatalogForm({
 
         {kind === "themes" && (
           <>
-            <div className="sm:col-span-2">
-              <Label>{t("catalogAdmin.description")}</Label>
-              <Textarea
-                value={(form as ThemeInput).description ?? ""}
-                onChange={(e) =>
-                  onChange({ ...form, description: e.target.value } as typeof form)
-                }
-                rows={2}
-                className="mt-1"
-              />
-            </div>
+            <BilingualDescriptionFields
+              descriptionAr={(form as ThemeInput).description_ar}
+              descriptionEn={(form as ThemeInput).description_en}
+              onChange={(patch) => onChange({ ...form, ...patch } as typeof form)}
+            />
             <div>
               <Label>{t("eventForm.primaryColor")}</Label>
               <Input
@@ -342,15 +377,16 @@ function CatalogForm({
           </div>
         )}
 
-        <div className="flex items-center gap-2 sm:col-span-2">
-          <input
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-border-gold px-4 py-3 sm:col-span-2">
+          <Label htmlFor={`active-${kind}`} className="text-sm font-medium text-gold-light">
+            {t("catalogAdmin.active")}
+          </Label>
+          <AppSwitch
             id={`active-${kind}`}
-            type="checkbox"
             checked={form.is_active}
-            onChange={(e) => onChange({ ...form, is_active: e.target.checked })}
-            className="rounded border-border-gold"
+            onChange={(is_active) => onChange({ ...form, is_active })}
+            aria-label={t("catalogAdmin.active")}
           />
-          <Label htmlFor={`active-${kind}`}>{t("catalogAdmin.active")}</Label>
         </div>
       </div>
 
@@ -358,7 +394,7 @@ function CatalogForm({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={saving || !form.name.trim()}
+          disabled={saving || !isCatalogFormValid(kind, form)}
           className="rounded-lg btn-gold px-4 py-2 text-sm disabled:opacity-60"
         >
           {saving ? t("catalogAdmin.saving") : t("common.save")}
@@ -421,13 +457,7 @@ function CatalogSection({
     setSaving(true);
     setError(null);
 
-    const payload = {
-      ...form,
-      description: "description" in form ? form.description?.trim() || undefined : undefined,
-      preview_url: "preview_url" in form ? form.preview_url?.trim() || undefined : undefined,
-      background_style:
-        "background_style" in form ? form.background_style?.trim() || undefined : undefined,
-    };
+    const payload = form;
 
     const result = editingId
       ? await updateCatalogItem(kind, editingId, payload as never)
@@ -436,7 +466,7 @@ function CatalogSection({
     setSaving(false);
 
     if (!result.success) {
-      setError(result.error);
+      setError(mapCatalogError(t, result.error));
       return;
     }
 
@@ -493,7 +523,7 @@ function CatalogSection({
         <table className="min-w-full text-sm">
           <thead className="bg-transparent text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">{t("catalogAdmin.name")}</th>
+              <th className="px-4 py-3 font-medium">{t("catalogAdmin.names")}</th>
               <th className="px-4 py-3 font-medium">{t("catalogAdmin.details")}</th>
               <th className="px-4 py-3 font-medium">{t("catalogAdmin.sortOrder")}</th>
               <th className="px-4 py-3 font-medium">{t("admin.status")}</th>
@@ -510,7 +540,12 @@ function CatalogSection({
             ) : (
               items.map((item) => (
                 <tr key={item.id} className="border-t border-border-gold/50">
-                  <td className="px-4 py-3 font-medium text-gold-light">{item.name}</td>
+                  <td className="px-4 py-3 font-medium text-gold-light">
+                    <p dir="rtl">{item.name_ar}</p>
+                    <p className="mt-1 text-muted" dir="ltr">
+                      {item.name_en}
+                    </p>
+                  </td>
                   <td className="px-4 py-3 text-muted">
                     {kind === "animated_templates" && (
                       <span>{(item as InvitationAnimatedTemplate).animation_key}</span>
@@ -571,7 +606,7 @@ function CatalogSection({
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(item.id, item.name)}
+                        onClick={() => handleDelete(item.id, formatCatalogAdminLabel(item))}
                         className="text-red-600 hover:text-red-700"
                       >
                         {t("catalogAdmin.delete")}

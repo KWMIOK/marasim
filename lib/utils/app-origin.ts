@@ -25,11 +25,23 @@ export function getAppOriginFromRequest(request?: Request): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 }
 
-export function getAuthCallbackUrl(request?: Request, nextPath?: string | null): string {
+export function getAuthCallbackUrl(
+  request?: Request,
+  nextPath?: string | null,
+  extraParams?: Record<string, string>
+): string {
   const url = new URL("/auth/callback", getAppOriginFromRequest(request));
 
   if (nextPath?.startsWith("/")) {
     url.searchParams.set("next", nextPath);
+  }
+
+  if (extraParams) {
+    for (const [key, value] of Object.entries(extraParams)) {
+      if (value) {
+        url.searchParams.set(key, value);
+      }
+    }
   }
 
   return url.toString();

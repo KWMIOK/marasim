@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ReceptionAccessGate } from "@/components/reception/reception-access-gate";
 import { ReceptionSyncProvider } from "@/components/reception/reception-sync-provider";
 import {
   getReceptionSessionByToken,
@@ -28,7 +29,7 @@ export default async function ReceptionLayout({
       initialSession={session}
       initialGuests={guests}
     >
-      {children}
+      <ReceptionAccessGate receptionToken={token}>{children}</ReceptionAccessGate>
     </ReceptionSyncProvider>
   );
 }

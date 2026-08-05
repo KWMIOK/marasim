@@ -18,6 +18,12 @@ export function AdminSettingsClient() {
       >
         {t("admin.manageCatalog")}
       </Link>
+      <Link
+        href={ROUTES.admin.pricing}
+        className="mt-3 inline-block text-sm font-medium text-gold hover:text-gold-light"
+      >
+        {t("admin.pricingLink")}
+      </Link>
     </PageShell>
   );
 }

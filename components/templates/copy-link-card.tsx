@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "@/hooks/use-locale";
 import { cn } from "@/lib/utils/cn";
@@ -10,11 +11,15 @@ export function CopyLinkCard({
   description,
   url,
   icon,
+  notice,
+  shareHref,
 }: {
   label: string;
   description: string;
   url: string;
   icon: ReactNode;
+  notice?: ReactNode;
+  shareHref?: string;
 }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -45,17 +50,28 @@ export function CopyLinkCard({
           aria-label={label}
           className="min-w-0 flex-1 rounded-xl border border-border-gold bg-surface px-3 py-2.5 text-xs text-gold-light outline-none"
         />
-        <button
-          type="button"
-          onClick={handleCopy}
-          className={cn(
-            "shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium",
-            copied ? "btn-outline-gold" : "btn-gold"
-          )}
-        >
-          {copied ? t("hostSuccess.copied") : t("hostSuccess.copy")}
-        </button>
+        <div className="flex shrink-0 flex-col gap-2 sm:min-w-[7.5rem]">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className={cn(
+              "rounded-xl px-4 py-2.5 text-sm font-medium",
+              copied ? "btn-outline-gold" : "btn-gold"
+            )}
+          >
+            {copied ? t("hostSuccess.copied") : t("hostSuccess.copy")}
+          </button>
+          {shareHref ? (
+            <Link
+              href={shareHref}
+              className="btn-outline-gold flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium"
+            >
+              {t("hostSuccess.share")}
+            </Link>
+          ) : null}
+        </div>
       </div>
+      {notice ? <div className="mt-3">{notice}</div> : null}
     </div>
   );
 }

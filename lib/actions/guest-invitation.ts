@@ -9,6 +9,12 @@ export type PublicGuestInvitation = {
   rsvpStatus: string;
   checkInStatus: string;
   guestQrEnabled: boolean;
+  locationName: string | null;
+  locationDirections: string | null;
+  mapsLat: number | null;
+  mapsLng: number | null;
+  mapsUrl: string | null;
+  eventLogoUrl: string | null;
 };
 
 function parsePublicGuestInvitation(value: unknown): PublicGuestInvitation | null {
@@ -35,6 +41,14 @@ function parsePublicGuestInvitation(value: unknown): PublicGuestInvitation | nul
       typeof record.check_in_status === "string" ? record.check_in_status : "not_checked_in",
     guestQrEnabled:
       typeof record.guest_qr_enabled === "boolean" ? record.guest_qr_enabled : true,
+    locationName: typeof record.location_name === "string" ? record.location_name : null,
+    locationDirections:
+      typeof record.location_directions === "string" ? record.location_directions : null,
+    mapsLat: typeof record.maps_lat === "number" ? record.maps_lat : null,
+    mapsLng: typeof record.maps_lng === "number" ? record.maps_lng : null,
+    mapsUrl: typeof record.maps_url === "string" ? record.maps_url : null,
+    eventLogoUrl:
+      typeof record.event_logo_url === "string" ? record.event_logo_url : null,
   };
 }
 

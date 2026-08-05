@@ -13,19 +13,20 @@ import {
   HostNameFieldIcon,
   LanguageFieldIcon,
   PhotoGalleryFieldIcon,
-  PrimaryColorFieldIcon,
-  SecondaryColorFieldIcon,
   ThankYouFieldIcon,
 } from "@/components/templates/invitation-field-icons";
 import { AppLanguagePickerField } from "@/components/templates/app-language-picker";
+import { TemplateThemePicker } from "@/components/templates/template-theme-picker";
+import { EventLogoField } from "@/components/templates/event-logo-field";
 import {
   InvitationDetailField,
   InvitationDetailInput,
-  TemplateColorField,
   TemplateDesignCarousel,
   TemplateSectionHeading,
   TemplateSwitchField,
 } from "@/components/templates/selected-template-form";
+import { invitationThemeColors } from "@/lib/templates/invitation-themes";
+import type { InvitationThemeId } from "@/lib/templates/invitation-themes";
 import { buildTemplateBrowseQuery } from "@/lib/templates/browse";
 import {
   DEFAULT_SELECTED_TEMPLATE_FORM,
@@ -38,7 +39,9 @@ import { getOccasionFlow, isOccasionTypeId, resetOccasionFlowAfterSuccess } from
 import { generateInvitationLinks } from "@/lib/invitations/generate-links";
 import { buildInvitationSuccessPath, saveHostInvitation } from "@/lib/invitations/host-invitations";
 import { createReceptionSession } from "@/lib/actions/reception";
+import { getPublicRegistrationToken } from "@/lib/actions/guest-registration";
 import { buildEventDisplayName } from "@/lib/reception/session";
+import { clampReceptionStaffCount } from "@/lib/templates/selected-template-form";
 import { useOccasionFlowPersistence } from "@/hooks/use-occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
@@ -73,6 +76,16 @@ function SparkIcon() {
   );
 }
 
+function ReceptionStaffIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4" aria-hidden>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
 function readSavedForm(): SelectedTemplateFormState {
   const saved = getOccasionFlow()?.customizeForm;
   return saved ? parseSelectedTemplateForm(saved) : DEFAULT_SELECTED_TEMPLATE_FORM;
@@ -94,6 +107,7 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
 
   const browseQuery = buildTemplateBrowseQuery({ category, occasion });
   const previewHref = `${ROUTES.templates.preview(template.id)}${browseQuery}`;
+  const conditionsHref = `${ROUTES.templates.conditions(template.id)}${browseQuery}`;
 
   const carouselImages = template.preview_url ? [template.preview_url] : [];
 
@@ -118,14 +132,26 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updateTheme(themeId: InvitationThemeId) {
+    const colors = invitationThemeColors(themeId);
+    setForm((current) => ({
+      ...current,
+      themeId,
+      primaryColor: colors.primaryColor,
+      secondaryColor: colors.secondaryColor,
+    }));
+  }
+
   async function handleUseTemplate() {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const isPrivateEvent = form.guestQr;
     const generatedLinks = generateInvitationLinks({
       hostName: form.hostName,
+      includeReceptionistLink: isPrivateEvent,
     });
 
     const occasionLabel = occasion
@@ -141,6 +167,13 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
       eventSlug: generatedLinks.eventSlug,
       guestToken: generatedLinks.guestToken,
       guestQrEnabled: form.guestQr,
+      receptionStaffCount: isPrivateEvent ? form.receptionStaffCount : 0,
+      locationName: form.location,
+      locationDirections: form.locationDirections,
+      mapsLat: form.mapsLat,
+      mapsLng: form.mapsLng,
+      mapsUrl: form.mapsUrl,
+      eventLogoUrl: form.eventLogoUrl,
     });
 
     if (!createResult.success) {
@@ -149,6 +182,10 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
       return;
     }
 
+    const publicRegistrationToken = isPrivateEvent
+      ? await getPublicRegistrationToken(generatedLinks.receptionistToken)
+      : null;
+
     const invitation = saveHostInvitation({
       templateId: template.id,
       eventDisplayName,
@@ -156,8 +193,24 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
       category,
       occasion,
       guestUrl: generatedLinks.guestUrl,
-      receptionistUrl: generatedLinks.receptionistUrl,
+      receptionistUrl: isPrivateEvent ? generatedLinks.receptionistUrl : "",
+      receptionSessionToken: generatedLinks.receptionistToken,
       guestQrEnabled: form.guestQr,
+      receptionStaffCount: isPrivateEvent ? form.receptionStaffCount : 0,
+      location: form.location,
+      locationDirections: form.locationDirections,
+      mapsLat: form.mapsLat,
+      mapsLng: form.mapsLng,
+      mapsUrl: form.mapsUrl,
+      eventLogoUrl: form.eventLogoUrl,
+      emergencyPasscode: isPrivateEvent ? (createResult.emergencyPasscode ?? null) : null,
+      noKidsAllowed: form.noKidsAllowed,
+      dressCode: form.dressCode,
+      menOnly: form.menOnly,
+      womenOnly: form.womenOnly,
+      couplesOnly: form.couplesOnly,
+      noPhotos: form.noPhotos,
+      publicRegistrationToken,
     });
 
     resetOccasionFlowAfterSuccess();
@@ -210,9 +263,11 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
               label={t("selectedTemplate.location")}
               htmlFor="location"
               location={form.location}
+              locationDirections={form.locationDirections}
               mapsLat={form.mapsLat}
               mapsLng={form.mapsLng}
               onLocationChange={(value) => updateForm("location", value)}
+              onLocationDirectionsChange={(value) => updateForm("locationDirections", value)}
               onMapChange={(value) => {
                 setForm((current) => ({
                   ...current,
@@ -226,6 +281,26 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
                 }));
               }}
             />
+            {form.guestQr ? (
+              <InvitationDetailField
+                label={t("selectedTemplate.receptionStaffCount")}
+                htmlFor="receptionStaffCount"
+                icon={<ReceptionStaffIcon />}
+              >
+                <InvitationDetailInput
+                  id="receptionStaffCount"
+                  type="number"
+                  min={0}
+                  max={20}
+                  inputMode="numeric"
+                  value={String(form.receptionStaffCount)}
+                  onChange={(event) =>
+                    updateForm("receptionStaffCount", clampReceptionStaffCount(event.target.value))
+                  }
+                />
+                <p className="mt-1.5 text-xs text-gold-muted">{t("selectedTemplate.receptionStaffCountHint")}</p>
+              </InvitationDetailField>
+            ) : null}
           </div>
         </section>
 
@@ -235,19 +310,10 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
             title={t("selectedTemplate.visualIdentity")}
           />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <TemplateColorField
-              label={t("selectedTemplate.primaryColor")}
-              htmlFor="primaryColor"
-              icon={<PrimaryColorFieldIcon />}
-              value={form.primaryColor}
-              onChange={(value) => updateForm("primaryColor", value)}
-            />
-            <TemplateColorField
-              label={t("selectedTemplate.secondaryColor")}
-              htmlFor="secondaryColor"
-              icon={<SecondaryColorFieldIcon />}
-              value={form.secondaryColor}
-              onChange={(value) => updateForm("secondaryColor", value)}
+            <TemplateThemePicker value={form.themeId} onChange={updateTheme} />
+            <EventLogoField
+              value={form.eventLogoUrl}
+              onChange={(value) => updateForm("eventLogoUrl", value)}
             />
             <AppLanguagePickerField
               label={t("selectedTemplate.language")}
@@ -273,11 +339,18 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
           />
           <div className="grid grid-cols-2 gap-3">
             <TemplateSwitchField
-              label={t("selectedTemplate.guestQr")}
+              labelWhenChecked={t("selectedTemplate.privateEvent")}
+              labelWhenUnchecked={t("selectedTemplate.publicEvent")}
               htmlFor="guestQr"
               icon={<GuestQrFieldIcon />}
               checked={form.guestQr}
-              onChange={(value) => updateForm("guestQr", value)}
+              onChange={(value) => {
+                setForm((current) => ({
+                  ...current,
+                  guestQr: value,
+                  receptionStaffCount: value ? current.receptionStaffCount : 0,
+                }));
+              }}
             />
             <TemplateSwitchField
               label={t("selectedTemplate.sharedPhotoGallery")}
@@ -301,6 +374,12 @@ export function TemplateCustomizeContent({ template }: { template: InvitationAni
               onChange={(value) => updateForm("thankYouMessage", value)}
             />
           </div>
+          <Link
+            href={conditionsHref}
+            className="btn-outline-gold mt-3 flex w-full items-center justify-center rounded-xl px-3 py-3 text-sm font-medium"
+          >
+            {t("selectedTemplate.eventConditionsButton")}
+          </Link>
         </section>
       </div>
 

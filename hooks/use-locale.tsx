@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -17,16 +15,9 @@ import {
   type TranslationKey,
 } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/types";
+import { LocaleContext, useLocale } from "@/hooks/locale-context";
 
-interface LocaleContextValue {
-  locale: Locale;
-  dir: "rtl" | "ltr";
-  setLocale: (locale: Locale) => void;
-  toggleLocale: () => void;
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
-}
-
-const LocaleContext = createContext<LocaleContextValue | null>(null);
+export { useLocale } from "@/hooks/locale-context";
 
 function writeCookieLocale(locale: Locale) {
   document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
@@ -81,14 +72,6 @@ export function LocaleProvider({
   );
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
-}
-
-export function useLocale() {
-  const ctx = useContext(LocaleContext);
-  if (!ctx) {
-    throw new Error("useLocale must be used within LocaleProvider");
-  }
-  return ctx;
 }
 
 export function useTranslation() {

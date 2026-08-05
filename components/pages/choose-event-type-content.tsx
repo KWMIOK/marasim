@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { OCCASION_TYPES_BY_CATEGORY, type EventCategory } from "@/lib/events/categories";
+import { formatPriceKd } from "@/lib/pricing/occasion-pricing";
 import { startOccasionCategoryFlow, saveOccasionFlow } from "@/lib/flow/occasion-flow";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
@@ -16,6 +17,18 @@ function EventTypeCapsule({ label }: { label: string }) {
     <span className="inline-flex select-none rounded-full border border-border-gold bg-surface px-3 py-1 text-xs text-gold-light pointer-events-none">
       {label}
     </span>
+  );
+}
+
+function PriceFromLabel({ price }: { price: number | null }) {
+  const { t } = useTranslation();
+
+  if (price == null) return null;
+
+  return (
+    <p className="mt-2 text-sm font-medium text-gold-light">
+      {t("chooseEventType.priceStartsFrom", { price: formatPriceKd(price) })}
+    </p>
   );
 }
 
@@ -47,7 +60,11 @@ function CategoryCard({
   );
 }
 
-export function ChooseEventTypeContent() {
+export function ChooseEventTypeContent({
+  lowestPrices,
+}: {
+  lowestPrices: Record<EventCategory, number | null>;
+}) {
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -71,6 +88,7 @@ export function ChooseEventTypeContent() {
           href={ROUTES.occasionCategory("personal")}
           category="personal"
         >
+          <PriceFromLabel price={lowestPrices.personal} />
           <div className="mt-3 flex flex-wrap gap-2">
             {OCCASION_TYPES_BY_CATEGORY.personal.map((type) => (
               <EventTypeCapsule key={type} label={occasionLabel("personal", type)} />
@@ -86,6 +104,7 @@ export function ChooseEventTypeContent() {
           href={ROUTES.occasionCategory("formal")}
           category="formal"
         >
+          <PriceFromLabel price={lowestPrices.formal} />
           <div className="mt-3 flex flex-wrap gap-2">
             {OCCASION_TYPES_BY_CATEGORY.formal.map((type) => (
               <EventTypeCapsule key={type} label={occasionLabel("formal", type)} />
@@ -101,6 +120,7 @@ export function ChooseEventTypeContent() {
           href={ROUTES.occasionCategory("vip")}
           category="vip"
         >
+          <PriceFromLabel price={lowestPrices.vip} />
           <p className="mt-2 text-sm text-muted">{t("chooseEventType.vip.subtitle")}</p>
           <span className="btn-gold mt-5 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-medium">
             {t("chooseEventType.vip.cta")}

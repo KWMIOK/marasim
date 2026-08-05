@@ -76,9 +76,7 @@ function ProceedCard({
 
 export function ChooseOccasionContent({ category }: { category: EventCategory }) {
   const { t } = useTranslation();
-  const [selectedOccasion, setSelectedOccasion] = useState<OccasionTypeId | null>(() =>
-    readOccasionFlowForCategory(category)
-  );
+  const [selectedOccasion, setSelectedOccasion] = useState<OccasionTypeId | null>(null);
   const occasionTypes = OCCASION_TYPES_BY_CATEGORY[category];
   const categoryTitleKey = `chooseOccasion.${category}.title` as TranslationKey;
   const hasSelection = selectedOccasion !== null;

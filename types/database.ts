@@ -30,6 +30,7 @@ export interface EventSettings {
 export interface Profile {
   id: string;
   full_name: string | null;
+  email: string | null;
   phone: string | null;
   role: UserRole;
   avatar_url: string | null;
@@ -146,6 +147,17 @@ export interface GuestInvitationPayload {
   >;
 }
 
+export interface OccasionPricingTierRow {
+  id: string;
+  category: "personal" | "formal" | "vip";
+  guests_from: number;
+  guests_to: number;
+  price_kd: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 type DefaultRelationship = {
   foreignKeyName: string;
   columns: string[];
@@ -205,6 +217,16 @@ export interface Database {
           not_arrived_guests?: number;
         };
         Update: Partial<ReceptionSessionRow>;
+        Relationships: DefaultRelationship[];
+      };
+      occasion_pricing_tiers: {
+        Row: OccasionPricingTierRow;
+        Insert: Omit<OccasionPricingTierRow, "id" | "created_at" | "updated_at"> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<OccasionPricingTierRow>;
         Relationships: DefaultRelationship[];
       };
     };

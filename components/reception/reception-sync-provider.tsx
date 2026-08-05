@@ -10,10 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { syncReceptionData } from "@/lib/actions/reception";
-import {
-  readReceptionEntrance,
-  saveReceptionEntrance,
-} from "@/lib/reception/entrance";
+import { RECEPTION_ENTRANCE_OPTIONS } from "@/lib/reception/entrance";
 import type { ReceptionGuestSummary } from "@/lib/reception/guest";
 import type { ReceptionSession } from "@/lib/reception/session";
 
@@ -24,7 +21,6 @@ type ReceptionSyncContextValue = {
   session: ReceptionSession;
   guests: ReceptionGuestSummary[];
   entrance: string;
-  setEntrance: (label: string) => void;
   syncing: boolean;
   lastSyncedAt: Date | null;
   syncNow: () => Promise<void>;
@@ -46,7 +42,7 @@ export function ReceptionSyncProvider({
 }) {
   const [session, setSession] = useState(initialSession);
   const [guests, setGuests] = useState(initialGuests);
-  const [entrance, setEntranceState] = useState(() => readReceptionEntrance(receptionToken));
+  const entrance = RECEPTION_ENTRANCE_OPTIONS[0];
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(new Date());
 
@@ -64,14 +60,6 @@ export function ReceptionSyncProvider({
       setSyncing(false);
     }
   }, [receptionToken]);
-
-  const setEntrance = useCallback(
-    (label: string) => {
-      setEntranceState(label);
-      saveReceptionEntrance(receptionToken, label);
-    },
-    [receptionToken]
-  );
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -103,13 +91,12 @@ export function ReceptionSyncProvider({
       session,
       guests,
       entrance,
-      setEntrance,
       syncing,
       lastSyncedAt,
       syncNow,
       getGuest,
     }),
-    [receptionToken, session, guests, entrance, setEntrance, syncing, lastSyncedAt, syncNow, getGuest]
+    [receptionToken, session, guests, entrance, syncing, lastSyncedAt, syncNow, getGuest]
   );
 
   return (

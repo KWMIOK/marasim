@@ -9,6 +9,7 @@ import { buildTemplateBrowseQuery } from "@/lib/templates/browse";
 import { ROUTES } from "@/lib/constants/routes";
 import { useTranslation } from "@/hooks/use-locale";
 import type { TranslationKey } from "@/lib/i18n";
+import { getCatalogDescription, getCatalogName, getCatalogSearchText } from "@/lib/catalog/localized";
 import { cn } from "@/lib/utils/cn";
 
 function TemplateCardBackground({ template }: { template: BrowseTemplate }) {
@@ -52,7 +53,7 @@ export function TemplateCard({
   onChooseComplete: () => void;
   onPreview?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const cardRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -97,9 +98,11 @@ export function TemplateCard({
       ) : null}
 
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center p-4 pt-10 text-center">
-        <h3 className="text-sm font-semibold text-gold-light">{template.name}</h3>
-        {template.description ? (
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{template.description}</p>
+        <h3 className="text-sm font-semibold text-gold-light">{getCatalogName(template, locale)}</h3>
+        {getCatalogDescription(template, locale) ? (
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
+            {getCatalogDescription(template, locale)}
+          </p>
         ) : null}
 
         {isChoosing ? (
@@ -134,7 +137,7 @@ export function TemplateSearchField({
   onChange: (value: string) => void;
   onSelectTemplate: (templateId: string) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -143,7 +146,7 @@ export function TemplateSearchField({
     if (!normalized) return [];
 
     return templates
-      .filter((template) => template.name.toLowerCase().includes(normalized))
+      .filter((template) => getCatalogSearchText(template).includes(normalized))
       .slice(0, 6);
   }, [templates, value]);
 
@@ -186,12 +189,12 @@ export function TemplateSearchField({
                 className="w-full px-4 py-2.5 text-sm text-gold-light transition hover:bg-surface"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
-                  onChange(template.name);
+                  onChange(getCatalogName(template, locale));
                   onSelectTemplate(template.id);
                   setOpen(false);
                 }}
               >
-                {template.name}
+                {getCatalogName(template, locale)}
               </button>
             </li>
           ))}

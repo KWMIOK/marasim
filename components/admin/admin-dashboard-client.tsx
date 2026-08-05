@@ -22,7 +22,7 @@ export function AdminDashboardClient({
     <PageShell>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gold-light">{t("nav.dashboard")}</h1>
+          <h1 className="text-2xl font-semibold text-gold-light">{t("admin.nav.dashboard")}</h1>
           <p className="text-sm text-muted">{t("admin.overview")}</p>
         </div>
         <Link

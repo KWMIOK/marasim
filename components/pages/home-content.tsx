@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { useTranslation } from "@/hooks/use-locale";
@@ -12,8 +14,15 @@ type HomeContentProps = {
 
 export function HomeContent({ initialAuthenticated = false }: HomeContentProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { isAuthenticated: clientAuthenticated, loading } = useAuthUser();
   const isAuthenticated = initialAuthenticated || clientAuthenticated;
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.replace(ROUTES.occasions);
+    }
+  }, [isAuthenticated, loading, router]);
 
   if (!isAuthenticated && loading) {
     return (
@@ -24,7 +33,11 @@ export function HomeContent({ initialAuthenticated = false }: HomeContentProps) 
   }
 
   if (isAuthenticated) {
-    return <AppPageShell className="pt-16">{null}</AppPageShell>;
+    return (
+      <AppPageShell className="pt-16">
+        <p className="text-sm text-muted">{t("common.loading")}</p>
+      </AppPageShell>
+    );
   }
 
   return (

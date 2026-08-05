@@ -8,7 +8,7 @@ export default async function OccasionCategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category } = await params;
-  if (!isEventCategory(category)) {
+  if (!isEventCategory(category) || category === "vip") {
     notFound();
   }
 

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { AppBackButton } from "@/components/shared/app-back-button";
 import { BottomNav } from "@/components/shared/bottom-nav";
 import { PublicLanguageToggle } from "@/components/shared/public-language-toggle";
-import { showAuthenticatedBackButton, showPublicLanguageToggle, usesAppShell } from "@/lib/constants/app-shell";
+import { showAppBackButton, showPublicLanguageToggle, usesAppShell } from "@/lib/constants/app-shell";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { cn } from "@/lib/utils/cn";
 
@@ -13,7 +13,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { isAuthenticated } = useAuthUser();
   const shell = usesAppShell(pathname);
-  const showBack = showAuthenticatedBackButton(pathname, isAuthenticated);
+  const showBack = showAppBackButton(pathname, isAuthenticated);
 
   return (
     <>

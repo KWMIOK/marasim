@@ -18,28 +18,35 @@ export type CatalogActionResult =
   | { success: true; id: string }
   | { success: false; error: string };
 
-export type AnimatedTemplateInput = {
-  name: string;
-  description?: string;
-  preview_url?: string;
-  animation_key: string;
-  is_active: boolean;
-  sort_order: number;
+type CatalogNameFields = {
+  name_ar: string;
+  name_en: string;
 };
 
-export type ThemeInput = {
-  name: string;
-  description?: string;
-  preview_url?: string;
-  primary_color: string;
-  secondary_color: string;
-  background_style?: string;
-  is_active: boolean;
-  sort_order: number;
+type CatalogDescriptionFields = {
+  description_ar: string;
+  description_en: string;
 };
 
-export type FontInput = {
-  name: string;
+export type AnimatedTemplateInput = CatalogNameFields &
+  CatalogDescriptionFields & {
+    preview_url?: string;
+    animation_key: string;
+    is_active: boolean;
+    sort_order: number;
+  };
+
+export type ThemeInput = CatalogNameFields &
+  CatalogDescriptionFields & {
+    preview_url?: string;
+    primary_color: string;
+    secondary_color: string;
+    background_style?: string;
+    is_active: boolean;
+    sort_order: number;
+  };
+
+export type FontInput = CatalogNameFields & {
   language: "ar" | "en" | "both";
   font_family: string;
   preview_url?: string;
@@ -47,8 +54,7 @@ export type FontInput = {
   sort_order: number;
 };
 
-export type FontColorInput = {
-  name: string;
+export type FontColorInput = CatalogNameFields & {
   color_hex: string;
   is_active: boolean;
   sort_order: number;
