@@ -95,6 +95,7 @@ This pushes `supabase/config.toml` auth settings to the linked project, includin
 - `http://localhost:3000/auth/callback`
 - `http://127.0.0.1:3000/auth/callback`
 - `https://marasim-ten.vercel.app/auth/callback`
+- `com.marasim.app://auth/callback` (Capacitor Android in-app Google sign-in)
 
 2. In [Supabase → Authentication → URL Configuration](https://supabase.com/dashboard/project/wjhprjfvyyesygftoqhh/auth/url-configuration), confirm **Redirect URLs** lists the localhost entries above.
 

@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { signInWithGoogle } from "@/lib/auth/google-oauth";
 import { formatKuwaitMobileInput, isValidKuwaitMobile } from "@/lib/phone/kuwait";
 import { useTranslation } from "@/hooks/use-locale";
-import { getAuthCallbackUrl } from "@/lib/utils/app-origin";
 import { ROUTES } from "@/lib/constants/routes";
 import { AdminAccessRequestButton } from "@/components/auth/admin-access-request-button";
 
@@ -73,29 +72,17 @@ export function AuthForm() {
 
   const phoneValid = isValidKuwaitMobile(phone);
 
-  async function signInWithGoogle(requestAdmin = false) {
+  async function handleGoogleSignIn(requestAdmin = false) {
     setError(null);
     setLoading("google");
 
-    const supabase = createClient();
-    const callbackUrl = getAuthCallbackUrl(
-      undefined,
+    const result = await signInWithGoogle({
       redirectTo,
-      requestAdmin ? { admin_request: "1" } : undefined
-    );
-
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callbackUrl,
-        queryParams: {
-          prompt: "select_account",
-        },
-      },
+      extraParams: requestAdmin ? { admin_request: "1" } : undefined,
     });
 
-    if (oauthError) {
-      setError(oauthError.message);
+    if (!result.ok) {
+      setError(result.error === "oauth_cancelled" ? t("auth.signInCancelled") : t("auth.signInFailed"));
       setLoading(null);
     }
   }
@@ -115,7 +102,7 @@ export function AuthForm() {
       <div className="mt-8 space-y-3">
         <button
           type="button"
-          onClick={() => signInWithGoogle(adminRequestOnSignup)}
+          onClick={() => void handleGoogleSignIn(adminRequestOnSignup)}
           disabled={loading !== null}
           className="btn-auth-dark flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
         >

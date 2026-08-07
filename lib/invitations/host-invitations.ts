@@ -1,6 +1,9 @@
 import { ROUTES } from "@/lib/constants/routes";
 import type { EventCategory, OccasionTypeId } from "@/lib/events/categories";
-import { parseReceptionistUrl } from "@/lib/invitations/parse-invitation-urls";
+import {
+  parseGuestInvitationUrl,
+  parseReceptionistUrl,
+} from "@/lib/invitations/parse-invitation-urls";
 
 export type HostInvitation = {
   id: string;
@@ -206,12 +209,28 @@ export function buildInvitationShareMethodPath(
   return `/templates/${invitation.templateId}/success/share/${method}${query ? `?${query}` : ""}`;
 }
 
+export function getEventSlugFromInvitation(invitation: HostInvitation): string | null {
+  return parseGuestInvitationUrl(invitation.guestUrl)?.eventSlug ?? null;
+}
+
 export function buildPublicRegistrationUrl(publicRegistrationToken: string): string {
   const path = ROUTES.publicRegistration(publicRegistrationToken);
   if (typeof window === "undefined") {
     return path;
   }
   return `${window.location.origin}${path}`;
+}
+
+export function buildPublicRegistrationUrlForInvitation(invitation: HostInvitation): string {
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const eventSlug = getEventSlugFromInvitation(invitation);
+  if (eventSlug) {
+    return `${origin}${ROUTES.eventRegister(eventSlug)}`;
+  }
+  if (invitation.publicRegistrationToken) {
+    return `${origin}${ROUTES.publicRegistration(invitation.publicRegistrationToken)}`;
+  }
+  return "";
 }
 
 export function hasReceptionEmployeeLink(invitation: HostInvitation): boolean {

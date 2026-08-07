@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cairo, Geist, Geist_Mono } from "next/font/google";
 import { AppProviders } from "@/components/shared/app-providers";
+import { CapacitorShellInit } from "@/components/shared/capacitor-shell-init";
 import { LocaleProvider } from "@/hooks/use-locale";
 import { getServerLocale } from "@/lib/i18n/server";
 import { localeDirection } from "@/lib/i18n";
@@ -46,6 +47,7 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col text-center font-sans text-gold-light">
         <LocaleProvider defaultLocale={locale}>
+          <CapacitorShellInit />
           <AppProviders>{children}</AppProviders>
         </LocaleProvider>
       </body>

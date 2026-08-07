@@ -22,6 +22,7 @@ export const ROUTES = {
   profileInvitationVendors: (invitationId: string) => `/profile/invitations/${invitationId}/vendors`,
   profileInvitationGuests: (invitationId: string) => `/profile/invitations/${invitationId}/guests`,
   publicRegistration: (token: string) => `/register/${token}`,
+  eventRegister: (slug: string) => `/event/${slug}/register`,
   vendorPass: (masterToken: string) => `/vendor-pass/${masterToken}`,
   admin: {
     root: "/admin",

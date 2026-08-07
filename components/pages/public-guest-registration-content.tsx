@@ -2,10 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { AppPageShell } from "@/components/shared/app-page-shell";
-import { getPublicRegistrationEvent, submitGuestRegistrationRequest } from "@/lib/actions/guest-registration";
+import {
+  getPublicRegistrationEvent,
+  getPublicRegistrationEventBySlug,
+  submitGuestRegistrationRequest,
+  submitGuestRegistrationRequestBySlug,
+} from "@/lib/actions/guest-registration";
 import { useTranslation } from "@/hooks/use-locale";
 
-export function PublicGuestRegistrationContent({ publicToken }: { publicToken: string }) {
+export function PublicGuestRegistrationContent({
+  publicToken,
+  eventSlug,
+}: {
+  publicToken?: string;
+  eventSlug?: string;
+}) {
   const { t } = useTranslation();
   const [eventName, setEventName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -14,13 +25,26 @@ export function PublicGuestRegistrationContent({ publicToken }: { publicToken: s
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [resolvedToken, setResolvedToken] = useState<string | null>(publicToken ?? null);
 
   useEffect(() => {
-    void getPublicRegistrationEvent(publicToken).then((event) => {
-      setEventName(event?.eventDisplayName ?? null);
+    async function loadEvent() {
+      if (eventSlug) {
+        const event = await getPublicRegistrationEventBySlug(eventSlug);
+        setEventName(event?.eventDisplayName ?? null);
+        setResolvedToken(event?.publicToken ?? null);
+      } else if (publicToken) {
+        const event = await getPublicRegistrationEvent(publicToken);
+        setEventName(event?.eventDisplayName ?? null);
+        setResolvedToken(publicToken);
+      } else {
+        setEventName(null);
+      }
       setLoading(false);
-    });
-  }, [publicToken]);
+    }
+
+    void loadEvent();
+  }, [eventSlug, publicToken]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -36,11 +60,17 @@ export function PublicGuestRegistrationContent({ publicToken }: { publicToken: s
     setSubmitting(true);
     setError(null);
 
-    const result = await submitGuestRegistrationRequest({
-      publicToken,
-      name: trimmedName,
-      phone: trimmedPhone,
-    });
+    const result = eventSlug
+      ? await submitGuestRegistrationRequestBySlug({
+          eventSlug,
+          name: trimmedName,
+          phone: trimmedPhone,
+        })
+      : await submitGuestRegistrationRequest({
+          publicToken: resolvedToken ?? publicToken ?? "",
+          name: trimmedName,
+          phone: trimmedPhone,
+        });
 
     setSubmitting(false);
 

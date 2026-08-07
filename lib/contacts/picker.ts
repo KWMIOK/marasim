@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core";
+
 export type PickedContact = {
   name: string;
   phone: string;
@@ -19,8 +21,12 @@ function getContactsManager(): ContactsManager | null {
   return contacts;
 }
 
+export function isNativeApp(): boolean {
+  return typeof window !== "undefined" && Capacitor.isNativePlatform();
+}
+
 export function isContactPickerSupported(): boolean {
-  return getContactsManager() !== null;
+  return isNativeApp() || getContactsManager() !== null;
 }
 
 function normalizePhone(value: string): string {
@@ -39,7 +45,39 @@ function pickPrimaryName(names: string[] | undefined): string {
   return names[0]?.trim() ?? "";
 }
 
+export async function loadNativeContacts(): Promise<PickedContact[]> {
+  const { Contacts } = await import("@capacitor-community/contacts");
+  const permission = await Contacts.requestPermissions();
+  if (permission.contacts !== "granted") {
+    throw new Error("CONTACT_PERMISSION_DENIED");
+  }
+
+  const { contacts } = await Contacts.getContacts({
+    projection: {
+      name: true,
+      phones: true,
+    },
+  });
+
+  const picked: PickedContact[] = [];
+  for (const contact of contacts) {
+    const phone = contact.phones?.[0]?.number;
+    if (!phone?.trim()) continue;
+    const name =
+      contact.name?.display?.trim() ||
+      [contact.name?.given, contact.name?.family].filter(Boolean).join(" ").trim() ||
+      phone;
+    picked.push({ name, phone: normalizePhone(phone) });
+  }
+
+  return picked.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function pickDeviceContacts(): Promise<PickedContact[]> {
+  if (isNativeApp()) {
+    return loadNativeContacts();
+  }
+
   const manager = getContactsManager();
   if (!manager) {
     throw new Error("CONTACT_PICKER_UNAVAILABLE");
@@ -68,12 +106,13 @@ export function openWhatsAppInvite(phone: string, message: string) {
 
 export async function sendWhatsAppInvites(
   contacts: PickedContact[],
-  message: string,
+  message: string | ((contact: PickedContact, index: number) => string),
   onProgress?: (index: number, total: number) => void
 ) {
   for (let index = 0; index < contacts.length; index += 1) {
     onProgress?.(index, contacts.length);
-    openWhatsAppInvite(contacts[index].phone, message);
+    const text = typeof message === "function" ? message(contacts[index], index) : message;
+    openWhatsAppInvite(contacts[index].phone, text);
     if (index < contacts.length - 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 600));
     }

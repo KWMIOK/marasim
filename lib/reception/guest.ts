@@ -4,12 +4,16 @@ export type ReceptionGuestSummary = {
   guestToken: string;
   name: string;
   invitationNumber: string;
+  phoneNumber: string | null;
   rsvpStatus: RsvpStatus;
   companionCount: number;
   avatarUrl: string | null;
   checkInStatus: CheckInStatus;
   checkedInAt?: string | null;
   checkedInEntrance?: string | null;
+  source?: string | null;
+  isVip?: boolean;
+  tableNumber?: string | null;
 };
 
 export type ReceptionGuestDetail = ReceptionGuestSummary & {
@@ -33,6 +37,7 @@ export function parseReceptionGuestSummary(value: unknown): ReceptionGuestSummar
     guestToken: record.guest_token,
     name: record.name,
     invitationNumber: record.invitation_number,
+    phoneNumber: typeof record.phone_number === "string" ? record.phone_number : null,
     rsvpStatus: (record.rsvp_status as RsvpStatus) ?? "not_opened",
     companionCount: typeof record.companion_count === "number" ? record.companion_count : 0,
     avatarUrl: typeof record.avatar_url === "string" ? record.avatar_url : null,
@@ -40,6 +45,9 @@ export function parseReceptionGuestSummary(value: unknown): ReceptionGuestSummar
     checkedInAt: typeof record.checked_in_at === "string" ? record.checked_in_at : null,
     checkedInEntrance:
       typeof record.checked_in_entrance === "string" ? record.checked_in_entrance : null,
+    source: typeof record.source === "string" ? record.source : null,
+    isVip: record.is_vip === true,
+    tableNumber: typeof record.table_number === "string" ? record.table_number : null,
   };
 }
 

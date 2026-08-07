@@ -61,6 +61,47 @@ export async function getPublicRegistrationEvent(
   };
 }
 
+export async function getPublicRegistrationEventBySlug(
+  eventSlug: string
+): Promise<(PublicRegistrationEvent & { publicToken?: string }) | null> {
+  const data = await callRpc<{
+    event_display_name?: string;
+    event_date?: string | null;
+    occasion?: string | null;
+    public_registration_token?: string;
+  }>("get_public_registration_event_by_slug", { p_event_slug: eventSlug });
+
+  if (!data?.event_display_name) return null;
+
+  return {
+    eventDisplayName: data.event_display_name,
+    eventDate: data.event_date ?? null,
+    occasion: data.occasion ?? null,
+    publicToken: data.public_registration_token,
+  };
+}
+
+export async function submitGuestRegistrationRequestBySlug(input: {
+  eventSlug: string;
+  name: string;
+  phone: string;
+}): Promise<{ success: true } | { success: false; error: string }> {
+  const data = await callRpc<{ success?: boolean; error?: string }>(
+    "submit_guest_registration_request_by_slug",
+    {
+      p_event_slug: input.eventSlug,
+      p_name: input.name,
+      p_phone: input.phone,
+    }
+  );
+
+  if (!data?.success) {
+    return { success: false, error: data?.error ?? "submit_failed" };
+  }
+
+  return { success: true };
+}
+
 export async function submitGuestRegistrationRequest(input: {
   publicToken: string;
   name: string;
@@ -114,6 +155,7 @@ export async function reviewGuestRegistrationRequest(input: {
       success: true;
       status: "approved" | "declined";
       guestUrl?: string;
+      qrPayload?: string;
       phone?: string;
       name?: string;
     }
@@ -124,6 +166,7 @@ export async function reviewGuestRegistrationRequest(input: {
     error?: string;
     status?: "approved" | "declined";
     guest_url_path?: string;
+    qr_payload?: string;
     phone?: string;
     name?: string;
   }>("review_guest_registration_request", {
@@ -146,6 +189,7 @@ export async function reviewGuestRegistrationRequest(input: {
     status:
       data.status ?? (input.action === "approve" ? "approved" : "declined"),
     guestUrl,
+    qrPayload: data.qr_payload,
     phone: data.phone,
     name: data.name,
   };

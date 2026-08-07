@@ -4,21 +4,32 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AppPageShell } from "@/components/shared/app-page-shell";
 import { CopyLinkCard } from "@/components/templates/copy-link-card";
+import { ContactsFallbackModal } from "@/components/guests/contacts-fallback-modal";
+import { GuestImportPreviewTable } from "@/components/guests/guest-import-preview-table";
+import { useToast } from "@/components/shared/toast-provider";
 import { useHostInvitationQuery } from "@/hooks/use-host-invitation-query";
 import {
-  buildPublicRegistrationUrl,
+  buildPublicRegistrationUrlForInvitation,
   getReceptionSessionToken,
 } from "@/lib/invitations/host-invitations";
 import { ROUTES } from "@/lib/constants/routes";
-import { addInvitationGuests } from "@/lib/invitations/invitation-guests";
+import { ensureReceptionSessionForInvitation } from "@/lib/actions/reception";
+import { createShareHubGuests } from "@/lib/actions/share-guests";
 import { getPublicRegistrationToken } from "@/lib/actions/guest-registration";
-import { parseGuestFile } from "@/lib/guests/parse-roster";
+import {
+  buildGuestImportPreview,
+  parseGuestFile,
+  type ParsedGuestPreviewRow,
+} from "@/lib/guests/parse-roster";
 import {
   GUEST_IMPORT_COLUMNS,
   GUEST_IMPORT_REQUIRED_COLUMNS,
+  parsedRowsToShareGuests,
 } from "@/lib/guests/import-columns";
+import { downloadGuestImportTemplate } from "@/lib/guests/download-import-template";
 import {
   isContactPickerSupported,
+  isNativeApp,
   openWhatsAppInvite,
   pickDeviceContacts,
   sendWhatsAppInvites,
@@ -26,6 +37,7 @@ import {
 } from "@/lib/contacts/picker";
 import { useTranslation } from "@/hooks/use-locale";
 import type { TranslationKey } from "@/lib/i18n";
+import type { HostInvitation } from "@/lib/invitations/host-invitations";
 
 export type InvitationShareMethod = "manual" | "contacts" | "import" | "public-link";
 
@@ -80,8 +92,8 @@ function GuestImportColumnsGuide() {
                 <td className="px-4 py-2.5 text-muted">
                   {column.required ? t("hostShare.importRequiredYes") : t("hostShare.importRequiredNo")}
                 </td>
-                <td dir="ltr" className="px-4 py-2.5 font-mono text-gold-light">
-                  {column.header}
+                <td dir="ltr" className="px-4 py-2.5 text-gold-light">
+                  {column.aliases.join(", ")}
                 </td>
                 <td dir="ltr" className="px-4 py-2.5 text-gold-muted">
                   {column.example}
@@ -100,6 +112,39 @@ function GuestImportColumnsGuide() {
   );
 }
 
+async function resolveReceptionToken(invitation: HostInvitation): Promise<string | null> {
+  const existing = getReceptionSessionToken(invitation);
+  if (existing) return existing;
+
+  const result = await ensureReceptionSessionForInvitation({
+    eventDisplayName: invitation.eventDisplayName,
+    eventDate: invitation.eventDate,
+    occasion: invitation.occasion,
+    guestUrl: invitation.guestUrl,
+    receptionistUrl: invitation.receptionistUrl,
+    receptionSessionToken: invitation.receptionSessionToken,
+    guestQrEnabled: invitation.guestQrEnabled,
+    receptionStaffCount: invitation.receptionStaffCount,
+    locationName: invitation.location || null,
+    locationDirections: invitation.locationDirections || null,
+    mapsLat: invitation.mapsLat,
+    mapsLng: invitation.mapsLng,
+    mapsUrl: invitation.mapsUrl || null,
+    eventLogoUrl: invitation.eventLogoUrl,
+  });
+
+  if (!result.success) return null;
+  return getReceptionSessionToken(invitation);
+}
+
+function buildWhatsAppMessage(
+  t: (key: TranslationKey, params?: Record<string, string>) => string,
+  eventName: string,
+  guestUrl: string
+) {
+  return t("hostShare.whatsappMessage", { event: eventName, link: guestUrl });
+}
+
 export function TemplateShareMethodContent({
   templateId,
   method,
@@ -108,19 +153,22 @@ export function TemplateShareMethodContent({
   method: InvitationShareMethod;
 }) {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const { invitation, hydrated } = useHostInvitationQuery(templateId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const [pickedContacts, setPickedContacts] = useState<PickedContact[]>([]);
+  const [selectedContactKeys, setSelectedContactKeys] = useState<Set<string>>(new Set());
   const [contactsSending, setContactsSending] = useState(false);
   const [contactsProgress, setContactsProgress] = useState<string | null>(null);
   const [contactsError, setContactsError] = useState<string | null>(null);
+  const [fallbackOpen, setFallbackOpen] = useState(false);
 
-  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [importPreview, setImportPreview] = useState<ParsedGuestPreviewRow[] | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
 
@@ -134,12 +182,21 @@ export function TemplateShareMethodContent({
 
     async function resolvePublicLink() {
       setPublicLinkLoading(true);
+      const slugUrl = buildPublicRegistrationUrlForInvitation(current);
+      if (slugUrl) {
+        setPublicRegistrationUrl(slugUrl);
+        setPublicLinkLoading(false);
+        return;
+      }
+
       let token = current.publicRegistrationToken;
       const receptionToken = getReceptionSessionToken(current);
       if (!token && receptionToken) {
         token = await getPublicRegistrationToken(receptionToken);
       }
-      setPublicRegistrationUrl(token ? buildPublicRegistrationUrl(token) : null);
+      setPublicRegistrationUrl(
+        token ? buildPublicRegistrationUrlForInvitation({ ...current, publicRegistrationToken: token }) : null
+      );
       setPublicLinkLoading(false);
     }
 
@@ -155,29 +212,88 @@ export function TemplateShareMethodContent({
   }
 
   const currentInvitation = invitation;
-  const whatsappMessage = t("hostShare.whatsappMessage", {
-    event: currentInvitation.eventDisplayName,
-    link: currentInvitation.guestUrl,
-  });
 
-  function handleManualSubmit() {
+  async function persistAndDispatch(
+    guests: Array<{
+      name: string;
+      phone: string;
+      source: "manual" | "contacts" | "import";
+      is_vip?: boolean;
+      table_number?: string;
+      companion_count?: number;
+    }>,
+    options: { openWhatsApp: boolean }
+  ) {
+    const receptionToken = await resolveReceptionToken(currentInvitation);
+    if (!receptionToken) {
+      showToast(t("hostShare.guestSaveFailed"), "error");
+      return null;
+    }
+
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+    const result = await createShareHubGuests({
+      receptionToken,
+      guests,
+      origin,
+    });
+
+    if (!result.success) {
+      showToast(t("hostShare.guestSaveFailed"), "error");
+      return null;
+    }
+
+    showToast(t("hostShare.guestSavedToast", { count: String(result.createdCount) }));
+
+    if (options.openWhatsApp) {
+      for (const created of result.guests) {
+        if (!created.guestUrl) continue;
+        const contact = guests.find(
+          (guest) => guest.phone === created.phone && guest.name === created.name
+        );
+        if (!contact) continue;
+        openWhatsAppInvite(
+          contact.phone,
+          buildWhatsAppMessage(t, currentInvitation.eventDisplayName, created.guestUrl)
+        );
+        await new Promise((resolve) => window.setTimeout(resolve, 600));
+      }
+    }
+
+    return result;
+  }
+
+  async function handleManualSubmit() {
     const name = guestName.trim();
     const phone = guestPhone.trim();
     if (!name || !phone) {
-      setFeedback(t("hostShare.manualInvalid"));
+      showToast(t("hostShare.manualInvalid"), "error");
       return;
     }
 
-    addInvitationGuests(currentInvitation.id, [{ name, phone }], "manual");
-    openWhatsAppInvite(phone, whatsappMessage);
-    setGuestName("");
-    setGuestPhone("");
-    setFeedback(t("hostShare.manualSavedOne", { name }));
+    setSaving(true);
+    const result = await persistAndDispatch([{ name, phone, source: "manual" }], {
+      openWhatsApp: true,
+    });
+    setSaving(false);
+
+    if (result) {
+      setGuestName("");
+      setGuestPhone("");
+    }
+  }
+
+  function contactKey(contact: PickedContact) {
+    return `${contact.name}::${contact.phone}`;
   }
 
   async function handlePickContacts() {
     setContactsError(null);
     setContactsProgress(null);
+
+    if (!isContactPickerSupported()) {
+      setFallbackOpen(true);
+      return;
+    }
 
     try {
       const contacts = await pickDeviceContacts();
@@ -186,28 +302,72 @@ export function TemplateShareMethodContent({
         return;
       }
       setPickedContacts(contacts);
+      setSelectedContactKeys(new Set(contacts.map(contactKey)));
     } catch (error) {
-      if (error instanceof Error && error.message === "CONTACT_PICKER_UNAVAILABLE") {
-        setContactsError(t("hostShare.contactsUnavailable"));
+      if (error instanceof Error && error.message === "CONTACT_PERMISSION_DENIED") {
+        setContactsError(t("hostShare.contactsPermissionDenied"));
+      } else if (error instanceof Error && error.message === "CONTACT_PICKER_UNAVAILABLE") {
+        setFallbackOpen(true);
       } else {
         setContactsError(t("hostShare.contactsPickFailed"));
       }
     }
   }
 
-  async function handleSendContactsWhatsApp() {
-    if (pickedContacts.length === 0 || contactsSending) return;
+  function toggleContactSelection(key: string) {
+    setSelectedContactKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  const selectedContacts = pickedContacts.filter((contact) =>
+    selectedContactKeys.has(contactKey(contact))
+  );
+
+  async function handleSendContactsWhatsApp(contacts: PickedContact[]) {
+    if (contacts.length === 0 || contactsSending) return;
 
     setContactsSending(true);
-    setContactsProgress(t("hostShare.contactsSending", { count: String(pickedContacts.length) }));
+    setContactsProgress(t("hostShare.contactsSending", { count: String(contacts.length) }));
 
-    addInvitationGuests(
-      currentInvitation.id,
-      pickedContacts.map((contact) => ({ name: contact.name, phone: contact.phone })),
-      "contacts"
-    );
+    const receptionToken = await resolveReceptionToken(currentInvitation);
+    if (!receptionToken) {
+      showToast(t("hostShare.guestSaveFailed"), "error");
+      setContactsSending(false);
+      return;
+    }
 
-    await sendWhatsAppInvites(pickedContacts, whatsappMessage, (index, total) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+    const result = await createShareHubGuests({
+      receptionToken,
+      guests: contacts.map((contact) => ({
+        name: contact.name,
+        phone: contact.phone,
+        source: "contacts" as const,
+      })),
+      origin,
+    });
+
+    if (!result.success) {
+      showToast(t("hostShare.guestSaveFailed"), "error");
+      setContactsSending(false);
+      return;
+    }
+
+    showToast(t("hostShare.guestSavedToast", { count: String(result.createdCount) }));
+
+    const urlByPhone = new Map(result.guests.map((guest) => [guest.phone, guest.guestUrl]));
+
+    await sendWhatsAppInvites(contacts, (contact) => {
+      const guestUrl = urlByPhone.get(contact.phone);
+      if (!guestUrl) {
+        return buildWhatsAppMessage(t, currentInvitation.eventDisplayName, currentInvitation.guestUrl);
+      }
+      return buildWhatsAppMessage(t, currentInvitation.eventDisplayName, guestUrl);
+    }, (index, total) => {
       setContactsProgress(
         t("hostShare.contactsSendingProgress", {
           current: String(index + 1),
@@ -217,7 +377,9 @@ export function TemplateShareMethodContent({
     });
 
     setContactsSending(false);
-    setContactsProgress(t("hostShare.contactsSent", { count: String(pickedContacts.length) }));
+    setContactsProgress(t("hostShare.contactsSent", { count: String(contacts.length) }));
+    setPickedContacts([]);
+    setSelectedContactKeys(new Set());
   }
 
   async function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -227,32 +389,35 @@ export function TemplateShareMethodContent({
 
     setImporting(true);
     setImportError(null);
-    setImportMessage(null);
+    setImportPreview(null);
 
     try {
       const buffer = await file.arrayBuffer();
       const rows = parseGuestFile(buffer, file.name);
-      const withPhone = rows.filter((row) => row.phone_number?.trim());
-
-      if (withPhone.length === 0) {
+      if (rows.length === 0) {
         setImportError(t("hostShare.importMissingPhone"));
         return;
       }
-
-      addInvitationGuests(
-        currentInvitation.id,
-        withPhone.map((row) => ({
-          name: row.name,
-          phone: row.phone_number ?? "",
-        })),
-        "import"
-      );
-      setImportMessage(t("hostShare.importParsed", { count: String(withPhone.length) }));
+      setImportPreview(buildGuestImportPreview(rows));
     } catch (error) {
       setImportError(error instanceof Error ? error.message : t("hostShare.importFailed"));
     } finally {
       setImporting(false);
     }
+  }
+
+  async function handleConfirmImport() {
+    if (!importPreview) return;
+    const validRows = importPreview.filter((row) => row.isValid);
+    if (validRows.length === 0) {
+      showToast(t("hostShare.importMissingPhone"), "error");
+      return;
+    }
+
+    setImporting(true);
+    await persistAndDispatch(parsedRowsToShareGuests(validRows, "import"), { openWhatsApp: false });
+    setImporting(false);
+    setImportPreview(null);
   }
 
   return (
@@ -271,10 +436,7 @@ export function TemplateShareMethodContent({
             <input
               id="guestName"
               value={guestName}
-              onChange={(event) => {
-                setGuestName(event.target.value);
-                setFeedback(null);
-              }}
+              onChange={(event) => setGuestName(event.target.value)}
               className="mt-2 w-full rounded-xl border border-border-gold bg-surface px-3 py-3 text-sm text-gold-light outline-none"
             />
           </div>
@@ -286,22 +448,19 @@ export function TemplateShareMethodContent({
               id="guestPhone"
               type="tel"
               value={guestPhone}
-              onChange={(event) => {
-                setGuestPhone(event.target.value);
-                setFeedback(null);
-              }}
+              onChange={(event) => setGuestPhone(event.target.value)}
               dir="ltr"
               className="mt-2 w-full rounded-xl border border-border-gold bg-surface px-3 py-3 text-sm text-gold-light outline-none"
             />
           </div>
           <button
             type="button"
-            onClick={handleManualSubmit}
-            className="btn-gold w-full rounded-xl px-4 py-3 text-sm font-medium"
+            disabled={saving}
+            onClick={() => void handleManualSubmit()}
+            className="btn-gold w-full rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-60"
           >
-            {t("hostShare.manualSubmit")}
+            {saving ? t("hostShare.savingGuest") : t("hostShare.manualSubmit")}
           </button>
-          {feedback ? <p className="text-xs text-gold-muted">{feedback}</p> : null}
         </div>
       ) : null}
 
@@ -312,32 +471,49 @@ export function TemplateShareMethodContent({
             onClick={() => void handlePickContacts()}
             className="btn-gold w-full rounded-xl px-4 py-3 text-sm font-medium"
           >
-            {t("hostShare.contactsPick")}
+            {isNativeApp() ? t("hostShare.contactsLoad") : t("hostShare.contactsPick")}
           </button>
           {!isContactPickerSupported() ? (
-            <p className="text-xs text-muted">{t("hostShare.contactsUnavailable")}</p>
+            <p className="text-xs text-muted">{t("hostShare.contactsFallbackHint")}</p>
           ) : (
-            <p className="text-xs text-muted">{t("hostShare.contactsHint")}</p>
+            <p className="text-xs text-muted">
+              {isNativeApp() ? t("hostShare.contactsNativeHint") : t("hostShare.contactsHint")}
+            </p>
           )}
           {pickedContacts.length > 0 ? (
             <div className="surface-card rounded-2xl p-4">
               <p className="text-sm font-medium text-gold-light">
-                {t("hostShare.contactsSelected", { count: String(pickedContacts.length) })}
+                {t("hostShare.contactsSelected", { count: String(selectedContacts.length) })}
               </p>
               <ul className="mt-3 max-h-48 space-y-2 overflow-y-auto">
-                {pickedContacts.map((contact) => (
-                  <li key={`${contact.name}-${contact.phone}`} className="text-xs text-muted">
-                    <span className="text-gold-light">{contact.name}</span>
-                    <span dir="ltr" className="ms-2">
-                      {contact.phone}
-                    </span>
-                  </li>
-                ))}
+                {pickedContacts.map((contact) => {
+                  const key = contactKey(contact);
+                  return (
+                    <li key={key}>
+                      <label className="flex cursor-pointer items-center gap-3 text-xs">
+                        {isNativeApp() ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedContactKeys.has(key)}
+                            onChange={() => toggleContactSelection(key)}
+                            className="h-4 w-4 accent-[#c9a227]"
+                          />
+                        ) : null}
+                        <span className="min-w-0 flex-1">
+                          <span className="text-gold-light">{contact.name}</span>
+                          <span dir="ltr" className="ms-2 text-muted">
+                            {contact.phone}
+                          </span>
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
               </ul>
               <button
                 type="button"
-                disabled={contactsSending}
-                onClick={() => void handleSendContactsWhatsApp()}
+                disabled={contactsSending || selectedContacts.length === 0}
+                onClick={() => void handleSendContactsWhatsApp(selectedContacts)}
                 className="btn-outline-gold mt-4 w-full rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-60"
               >
                 {contactsSending ? t("hostShare.contactsSendingShort") : t("hostShare.contactsSubmit")}
@@ -346,16 +522,32 @@ export function TemplateShareMethodContent({
           ) : null}
           {contactsProgress ? <p className="text-xs text-gold-muted">{contactsProgress}</p> : null}
           {contactsError ? <p className="text-xs text-red-300">{contactsError}</p> : null}
+          <ContactsFallbackModal
+            open={fallbackOpen}
+            onClose={() => setFallbackOpen(false)}
+            onConfirm={(contacts) => {
+              setPickedContacts(contacts);
+              setSelectedContactKeys(new Set(contacts.map(contactKey)));
+              void handleSendContactsWhatsApp(contacts);
+            }}
+          />
         </div>
       ) : null}
 
       {method === "import" ? (
         <div className="mt-8 space-y-4 text-start">
           <GuestImportColumnsGuide />
+          <button
+            type="button"
+            onClick={downloadGuestImportTemplate}
+            className="btn-outline-gold w-full rounded-xl px-4 py-3 text-sm font-medium"
+          >
+            {t("hostShare.importDownloadTemplate")}
+          </button>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+            accept=".csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             className="hidden"
             onChange={handleImportFile}
           />
@@ -367,7 +559,19 @@ export function TemplateShareMethodContent({
           >
             {importing ? t("guestImport.importing") : t("hostShare.importSubmit")}
           </button>
-          {importMessage ? <p className="text-xs text-gold-muted">{importMessage}</p> : null}
+          {importPreview ? (
+            <>
+              <GuestImportPreviewTable rows={importPreview} />
+              <button
+                type="button"
+                disabled={importing || importPreview.every((row) => !row.isValid)}
+                onClick={() => void handleConfirmImport()}
+                className="btn-gold w-full rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-60"
+              >
+                {importing ? t("hostShare.savingGuest") : t("hostShare.importConfirm")}
+              </button>
+            </>
+          ) : null}
           {importError ? <p className="text-xs text-red-300">{importError}</p> : null}
         </div>
       ) : null}

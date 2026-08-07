@@ -9,6 +9,12 @@ export type ParsedGuestRow = {
   companion_count?: number;
 };
 
+export type ParsedGuestPreviewRow = ParsedGuestRow & {
+  rowIndex: number;
+  isValid: boolean;
+  missingFields: string[];
+};
+
 function normalizeKey(key: string): string {
   return key.trim().toLowerCase().replace(/\s+/g, "_");
 }
@@ -44,6 +50,7 @@ function rowToGuest(row: Record<string, unknown>): ParsedGuestRow | null {
     normalized.phone_number ??
       normalized.phone ??
       normalized.mobile ??
+      normalized.mobile_number ??
       normalized.number ??
       ""
   ).trim();
@@ -51,12 +58,32 @@ function rowToGuest(row: Record<string, unknown>): ParsedGuestRow | null {
   return {
     name,
     phone_number: phone || undefined,
-    is_vip: parseBoolean(normalized.is_vip ?? normalized.vip),
-    table_number: String(normalized.table_number ?? normalized.table ?? "").trim() || undefined,
+    is_vip: parseBoolean(normalized.is_vip ?? normalized.vip ?? normalized.vip_status),
+    table_number:
+      String(normalized.table_number ?? normalized.table ?? "").trim() || undefined,
     companion_count: parseNumber(
-      normalized.companion_count ?? normalized.companions ?? normalized.plus_ones
+      normalized.companion_count ??
+        normalized.companions ??
+        normalized.plus_ones ??
+        normalized.plus_one ??
+        normalized.extra_guests
     ),
   };
+}
+
+export function buildGuestImportPreview(rows: ParsedGuestRow[]): ParsedGuestPreviewRow[] {
+  return rows.map((row, index) => {
+    const missingFields: string[] = [];
+    if (!row.name.trim()) missingFields.push("name");
+    if (!row.phone_number?.trim()) missingFields.push("phone");
+
+    return {
+      ...row,
+      rowIndex: index + 1,
+      isValid: missingFields.length === 0,
+      missingFields,
+    };
+  });
 }
 
 export function parseGuestFile(buffer: ArrayBuffer, filename: string): ParsedGuestRow[] {
@@ -76,7 +103,7 @@ export function parseGuestFile(buffer: ArrayBuffer, filename: string): ParsedGue
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
   } else {
-    throw new Error("Unsupported file type. Upload CSV or Excel (.xlsx).");
+    throw new Error("Unsupported file type. Upload CSV or Excel (.xlsx, .xls).");
   }
 
   return rows

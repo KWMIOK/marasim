@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { signInWithGoogle } from "@/lib/auth/google-oauth";
 import { useTranslation } from "@/hooks/use-locale";
-import { getAuthCallbackUrl } from "@/lib/utils/app-origin";
 
 function GoogleIcon() {
   return (
@@ -56,25 +55,14 @@ export function SocialLogin() {
   );
   const [loading, setLoading] = useState<"google" | null>(null);
 
-  async function signInWithGoogle() {
+  async function handleGoogleSignIn() {
     setError(null);
     setLoading("google");
 
-    const supabase = createClient();
-    const callbackUrl = getAuthCallbackUrl(undefined, redirectTo);
+    const result = await signInWithGoogle({ redirectTo });
 
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callbackUrl,
-        queryParams: {
-          prompt: "select_account",
-        },
-      },
-    });
-
-    if (oauthError) {
-      setError(oauthError.message);
+    if (!result.ok) {
+      setError(result.error === "oauth_cancelled" ? t("auth.signInCancelled") : t("auth.signInFailed"));
       setLoading(null);
     }
   }
@@ -83,7 +71,7 @@ export function SocialLogin() {
     <div className="space-y-3">
       <button
         type="button"
-        onClick={signInWithGoogle}
+        onClick={() => void handleGoogleSignIn()}
         disabled={loading !== null}
         className="btn-outline-gold flex w-full items-center justify-center gap-3 rounded-lg py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
