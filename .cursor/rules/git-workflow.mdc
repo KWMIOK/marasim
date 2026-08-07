@@ -1,0 +1,16 @@
+---
+description: Always commit and push completed work to origin without asking
+alwaysApply: true
+---
+
+# Git workflow
+
+After completing implementation work (features, fixes, refactors):
+
+1. Commit all relevant changes with a concise message focused on **why**.
+2. Push to `origin` on the current branch immediately — do **not** ask for permission.
+3. Do not push secrets (`.env`, credentials). Warn if those are staged.
+4. Never force-push to `main`/`master` unless explicitly requested.
+5. If Vercel is connected, a push to `main` triggers production deploy — no separate deploy step needed unless native/Capacitor build artifacts require it.
+
+Skip commit/push only when the user explicitly says not to, or when there are zero file changes.
