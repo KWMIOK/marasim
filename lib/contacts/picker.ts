@@ -45,13 +45,53 @@ function pickPrimaryName(names: string[] | undefined): string {
   return names[0]?.trim() ?? "";
 }
 
-export async function loadNativeContacts(): Promise<PickedContact[]> {
+function contactFromPayload(contact: {
+  name?: { display?: string | null; given?: string | null; family?: string | null };
+  phones?: Array<{ number?: string | null; isPrimary?: boolean | null }>;
+}): PickedContact | null {
+  const phoneEntry =
+    contact.phones?.find((entry) => entry.isPrimary && entry.number?.trim()) ??
+    contact.phones?.find((entry) => entry.number?.trim());
+  const phone = phoneEntry?.number?.trim();
+  if (!phone) return null;
+
+  const name =
+    contact.name?.display?.trim() ||
+    [contact.name?.given, contact.name?.family].filter(Boolean).join(" ").trim() ||
+    phone;
+
+  return { name, phone: normalizePhone(phone) };
+}
+
+async function ensureContactsPermission(): Promise<void> {
   const { Contacts } = await import("@capacitor-community/contacts");
-  const permission = await Contacts.requestPermissions();
-  if (permission.contacts !== "granted") {
+  let permission = await Contacts.requestPermissions();
+  if (permission.contacts !== "granted" && permission.contacts !== "limited") {
+    permission = await Contacts.checkPermissions();
+  }
+  if (permission.contacts !== "granted" && permission.contacts !== "limited") {
     throw new Error("CONTACT_PERMISSION_DENIED");
   }
+}
 
+export async function pickSingleNativeContact(): Promise<PickedContact | null> {
+  await ensureContactsPermission();
+
+  const { Contacts } = await import("@capacitor-community/contacts");
+  const { contact } = await Contacts.pickContact({
+    projection: {
+      name: true,
+      phones: true,
+    },
+  });
+
+  return contactFromPayload(contact);
+}
+
+export async function loadNativeContacts(): Promise<PickedContact[]> {
+  await ensureContactsPermission();
+
+  const { Contacts } = await import("@capacitor-community/contacts");
   const { contacts } = await Contacts.getContacts({
     projection: {
       name: true,
@@ -61,13 +101,8 @@ export async function loadNativeContacts(): Promise<PickedContact[]> {
 
   const picked: PickedContact[] = [];
   for (const contact of contacts) {
-    const phone = contact.phones?.[0]?.number;
-    if (!phone?.trim()) continue;
-    const name =
-      contact.name?.display?.trim() ||
-      [contact.name?.given, contact.name?.family].filter(Boolean).join(" ").trim() ||
-      phone;
-    picked.push({ name, phone: normalizePhone(phone) });
+    const mapped = contactFromPayload(contact);
+    if (mapped) picked.push(mapped);
   }
 
   return picked.sort((a, b) => a.name.localeCompare(b.name));
@@ -75,7 +110,8 @@ export async function loadNativeContacts(): Promise<PickedContact[]> {
 
 export async function pickDeviceContacts(): Promise<PickedContact[]> {
   if (isNativeApp()) {
-    return loadNativeContacts();
+    const contact = await pickSingleNativeContact();
+    return contact ? [contact] : [];
   }
 
   const manager = getContactsManager();

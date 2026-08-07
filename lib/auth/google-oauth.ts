@@ -162,13 +162,6 @@ export async function signInWithGoogle(input: {
         pendingOAuth = { resolve, reject, timeoutId };
 
         void import("@capacitor/browser").then(({ Browser }) => {
-          const finishedListener = Browser.addListener("browserFinished", () => {
-            void finishedListener.then((listener) => listener.remove());
-            if (pendingOAuth) {
-              clearPendingOAuth(new Error("oauth_cancelled"));
-            }
-          });
-
           void Browser.open({ url: data.url });
         });
       });

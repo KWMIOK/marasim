@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/use-locale";
 import { isOccasionsNavActive, useOccasionsNavHref } from "@/hooks/use-occasion-flow";
-import { ROUTES } from "@/lib/constants/routes";
+import { BOTTOM_NAV_ROUTES, ROUTES } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
 
 const NAV_ITEMS = [
@@ -17,8 +18,15 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { t } = useTranslation();
   const occasionsHref = useOccasionsNavHref();
+
+  useEffect(() => {
+    for (const href of BOTTOM_NAV_ROUTES) {
+      router.prefetch(href);
+    }
+  }, [router]);
 
   return (
     <nav
@@ -35,6 +43,7 @@ export function BottomNav() {
             <Link
               key={item.labelKey}
               href={href}
+              prefetch
               replace={!active}
               className={cn(
                 "flex min-w-0 flex-1 flex-col items-center justify-center px-1 py-2 text-center text-xs transition",

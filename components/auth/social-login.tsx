@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Capacitor } from "@capacitor/core";
 import { signInWithGoogle } from "@/lib/auth/google-oauth";
+import { createClient } from "@/lib/supabase/client";
 import { useTranslation } from "@/hooks/use-locale";
 
 function GoogleIcon() {
@@ -44,6 +46,19 @@ function PhoneIcon() {
   );
 }
 
+async function waitForNativeSession(timeoutMs = 15000): Promise<boolean> {
+  const supabase = createClient();
+  const started = Date.now();
+
+  while (Date.now() - started < timeoutMs) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return true;
+    await new Promise((resolve) => window.setTimeout(resolve, 500));
+  }
+
+  return false;
+}
+
 export function SocialLogin() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -61,10 +76,20 @@ export function SocialLogin() {
 
     const result = await signInWithGoogle({ redirectTo });
 
-    if (!result.ok) {
-      setError(result.error === "oauth_cancelled" ? t("auth.signInCancelled") : t("auth.signInFailed"));
-      setLoading(null);
+    if (result.ok) {
+      return;
     }
+
+    if (Capacitor.isNativePlatform() && result.error === "oauth_cancelled") {
+      const signedIn = await waitForNativeSession();
+      if (signedIn) {
+        window.location.reload();
+        return;
+      }
+    }
+
+    setError(result.error === "oauth_cancelled" ? t("auth.signInCancelled") : t("auth.signInFailed"));
+    setLoading(null);
   }
 
   return (

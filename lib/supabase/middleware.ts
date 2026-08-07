@@ -33,10 +33,6 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const pathname = request.nextUrl.pathname;
 
   const isAuthRoute = pathname.startsWith("/login");
@@ -52,6 +48,18 @@ export async function updateSession(request: NextRequest) {
   if (isAuthCallback) {
     return supabaseResponse;
   }
+
+  const needsStrictAuth =
+    isAuthRoute || isProtectedRoute;
+
+  if (!needsStrictAuth) {
+    await supabase.auth.getSession();
+    return supabaseResponse;
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();

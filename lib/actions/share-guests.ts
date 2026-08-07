@@ -8,8 +8,20 @@ export type CreatedShareHubGuest = {
   guestUrl?: string;
 };
 
+export type SkippedDuplicateGuest = {
+  name: string;
+  phone: string;
+  reason: "duplicate_in_batch" | "duplicate_existing";
+};
+
 export type CreateShareHubGuestsResult =
-  | { success: true; guests: CreatedShareHubGuest[]; createdCount: number }
+  | {
+      success: true;
+      guests: CreatedShareHubGuest[];
+      createdCount: number;
+      skippedDuplicates: SkippedDuplicateGuest[];
+      skippedCount: number;
+    }
   | { success: false; error: string };
 
 type ShareGuestInput = {
@@ -57,6 +69,12 @@ export async function createShareHubGuests(input: {
     success?: boolean;
     error?: string;
     created_count?: number;
+    skipped_count?: number;
+    skipped_duplicates?: Array<{
+      name?: string;
+      phone?: string;
+      reason?: "duplicate_in_batch" | "duplicate_existing";
+    }>;
     guests?: Array<{
       name?: string;
       phone?: string;
@@ -99,9 +117,24 @@ export async function createShareHubGuests(input: {
           : guest.guest_url_path ?? undefined,
     }));
 
+  const skippedDuplicates: SkippedDuplicateGuest[] = (data.skipped_duplicates ?? [])
+    .filter(
+      (guest): guest is SkippedDuplicateGuest =>
+        typeof guest.name === "string" &&
+        typeof guest.phone === "string" &&
+        (guest.reason === "duplicate_in_batch" || guest.reason === "duplicate_existing")
+    )
+    .map((guest) => ({
+      name: guest.name,
+      phone: guest.phone,
+      reason: guest.reason,
+    }));
+
   return {
     success: true,
     guests,
     createdCount: data.created_count ?? guests.length,
+    skippedDuplicates,
+    skippedCount: data.skipped_count ?? skippedDuplicates.length,
   };
 }

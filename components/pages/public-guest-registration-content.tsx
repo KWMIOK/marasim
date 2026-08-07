@@ -75,6 +75,14 @@ export function PublicGuestRegistrationContent({
     setSubmitting(false);
 
     if (!result.success) {
+      if (result.error === "already_registered") {
+        setError(t("publicRegistration.alreadyRegistered"));
+        return;
+      }
+      if (result.error === "already_submitted") {
+        setSubmitted(true);
+        return;
+      }
       setError(t("publicRegistration.submitFailed"));
       return;
     }

@@ -242,7 +242,17 @@ export function TemplateShareMethodContent({
       return null;
     }
 
-    showToast(t("hostShare.guestSavedToast", { count: String(result.createdCount) }));
+    if (result.createdCount > 0) {
+      showToast(t("hostShare.guestSavedToast", { count: String(result.createdCount) }));
+    }
+
+    if (result.skippedCount > 0) {
+      showToast(t("hostShare.guestDuplicatesSkipped", { count: String(result.skippedCount) }), "error");
+    }
+
+    if (result.createdCount === 0 && result.skippedCount > 0) {
+      return null;
+    }
 
     if (options.openWhatsApp) {
       for (const created of result.guests) {
@@ -286,6 +296,17 @@ export function TemplateShareMethodContent({
     return `${contact.name}::${contact.phone}`;
   }
 
+  function mergePickedContact(contact: PickedContact) {
+    const key = contactKey(contact);
+    setPickedContacts((current) => {
+      if (current.some((entry) => contactKey(entry) === key)) {
+        return current;
+      }
+      return [...current, contact].sort((a, b) => a.name.localeCompare(b.name));
+    });
+    setSelectedContactKeys((current) => new Set([...current, key]));
+  }
+
   async function handlePickContacts() {
     setContactsError(null);
     setContactsProgress(null);
@@ -301,8 +322,9 @@ export function TemplateShareMethodContent({
         setContactsError(t("hostShare.contactsEmpty"));
         return;
       }
-      setPickedContacts(contacts);
-      setSelectedContactKeys(new Set(contacts.map(contactKey)));
+      for (const contact of contacts) {
+        mergePickedContact(contact);
+      }
     } catch (error) {
       if (error instanceof Error && error.message === "CONTACT_PERMISSION_DENIED") {
         setContactsError(t("hostShare.contactsPermissionDenied"));
@@ -357,7 +379,16 @@ export function TemplateShareMethodContent({
       return;
     }
 
-    showToast(t("hostShare.guestSavedToast", { count: String(result.createdCount) }));
+    if (result.createdCount > 0) {
+      showToast(t("hostShare.guestSavedToast", { count: String(result.createdCount) }));
+    }
+    if (result.skippedCount > 0) {
+      showToast(t("hostShare.guestDuplicatesSkipped", { count: String(result.skippedCount) }), "error");
+    }
+    if (result.createdCount === 0) {
+      setContactsSending(false);
+      return;
+    }
 
     const urlByPhone = new Map(result.guests.map((guest) => [guest.phone, guest.guestUrl]));
 
@@ -471,7 +502,11 @@ export function TemplateShareMethodContent({
             onClick={() => void handlePickContacts()}
             className="btn-gold w-full rounded-xl px-4 py-3 text-sm font-medium"
           >
-            {isNativeApp() ? t("hostShare.contactsLoad") : t("hostShare.contactsPick")}
+            {pickedContacts.length > 0 && isNativeApp()
+              ? t("hostShare.contactsAddMore")
+              : isNativeApp()
+                ? t("hostShare.contactsLoad")
+                : t("hostShare.contactsPick")}
           </button>
           {!isContactPickerSupported() ? (
             <p className="text-xs text-muted">{t("hostShare.contactsFallbackHint")}</p>
@@ -539,7 +574,7 @@ export function TemplateShareMethodContent({
           <GuestImportColumnsGuide />
           <button
             type="button"
-            onClick={downloadGuestImportTemplate}
+            onClick={() => void downloadGuestImportTemplate()}
             className="btn-outline-gold w-full rounded-xl px-4 py-3 text-sm font-medium"
           >
             {t("hostShare.importDownloadTemplate")}

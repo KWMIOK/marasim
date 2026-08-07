@@ -45,6 +45,10 @@ export function ReceptionStaffRegistrationForm({
 
   const phoneValid = isValidKuwaitMobile(phone);
   const e164Phone = phoneValid ? toE164KuwaitMobile(phone) : null;
+  const emergencyReady =
+    fullName.trim().length > 0 && phoneValid && passcode.length === 6 && !submitting;
+  const emergencyMissingPhone = passcode.length === 6 && !phoneValid;
+  const emergencyMissingName = passcode.length === 6 && phoneValid && !fullName.trim();
 
   async function handleSendOtp(event: React.FormEvent) {
     event.preventDefault();
@@ -267,19 +271,6 @@ export function ReceptionStaffRegistrationForm({
           <p className="text-sm text-muted">{t("reception.emergencyAccessDescription")}</p>
 
           <div>
-            <label htmlFor="emergencyFullName" className="block text-sm font-medium text-gold-light">
-              {t("reception.staffFullName")}
-            </label>
-            <input
-              id="emergencyFullName"
-              value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
-              className="surface-card mt-2 w-full rounded-xl px-4 py-3 text-sm text-gold-light outline-none focus:ring-2 focus:ring-gold/40"
-              required
-            />
-          </div>
-
-          <div>
             <label htmlFor="emergencyPhone" className="block text-sm font-medium text-gold-light">
               {t("reception.staffPhone")}
             </label>
@@ -293,10 +284,26 @@ export function ReceptionStaffRegistrationForm({
                 inputMode="numeric"
                 value={phone}
                 onChange={(event) => setPhone(formatKuwaitMobileInput(event.target.value))}
-                className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm text-gold-light outline-none"
+                placeholder="5XXXXXXX"
+                className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm text-gold-light outline-none placeholder:text-gold-muted"
+                autoComplete="tel-national"
                 required
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="emergencyFullName" className="block text-sm font-medium text-gold-light">
+              {t("reception.staffFullName")}
+            </label>
+            <input
+              id="emergencyFullName"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              className="surface-card mt-2 w-full rounded-xl px-4 py-3 text-sm text-gold-light outline-none focus:ring-2 focus:ring-gold/40"
+              autoComplete="name"
+              required
+            />
           </div>
 
           <div>
@@ -313,11 +320,18 @@ export function ReceptionStaffRegistrationForm({
             />
           </div>
 
+          {emergencyMissingPhone ? (
+            <p className="text-xs text-gold-muted">{t("reception.emergencyPhoneRequired")}</p>
+          ) : null}
+          {emergencyMissingName ? (
+            <p className="text-xs text-gold-muted">{t("reception.emergencyNameRequired")}</p>
+          ) : null}
+
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
           <button
             type="submit"
-            disabled={!fullName.trim() || !phoneValid || passcode.length !== 6 || submitting}
+            disabled={!emergencyReady}
             className="btn-gold w-full rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-40"
           >
             {submitting ? t("common.loading") : t("reception.emergencyAccessSubmit")}
