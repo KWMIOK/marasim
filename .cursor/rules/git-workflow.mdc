@@ -11,6 +11,14 @@ After completing implementation work (features, fixes, refactors):
 2. Push to `origin` on the current branch immediately — do **not** ask for permission.
 3. Do not push secrets (`.env`, credentials). Warn if those are staged.
 4. Never force-push to `main`/`master` unless explicitly requested.
-5. If Vercel is connected, a push to `main` triggers production deploy — no separate deploy step needed unless native/Capacitor build artifacts require it.
+
+## After every push to `main`
+
+1. **Vercel** — auto-deploys the web app from Git; no manual `vercel --prod` needed.
+2. **APK** — GitHub Actions (`.github/workflows/build-apk.yml`) builds and publishes
+   `marasim-prod-latest.apk` to the [apk-latest release](https://github.com/KWMIOK/marasim/releases/tag/apk-latest).
+3. **Local APK** — when working in this repo on a machine with Android SDK/Java, also run
+   `npm run cap:apk:prod` after pushing so
+   `android/app/build/outputs/apk/debug/app-debug.apk` is ready for USB install.
 
 Skip commit/push only when the user explicitly says not to, or when there are zero file changes.

@@ -1,0 +1,78 @@
+name: Build production APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production APK shell
+        run: npm run cap:apk:prod
+        env:
+          CAPACITOR_SERVER_URL: https://marasim-ten.vercel.app
+
+      - name: Rename APK with commit SHA
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+            "marasim-prod-${{ github.sha }}.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+            marasim-prod-latest.apk
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: marasim-prod-apk
+          path: |
+            marasim-prod-latest.apk
+            marasim-prod-${{ github.sha }}.apk
+          retention-days: 90
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Latest production APK
+          body: |
+            Capacitor shell loading **https://marasim-ten.vercel.app**
+
+            | | |
+            |---|---|
+            | Commit | `${{ github.sha }}` |
+            | Branch | `${{ github.ref_name }}` |
+            | Built | ${{ github.event.head_commit.timestamp }} |
+
+            Install `marasim-prod-latest.apk` on Android. The UI loads from Vercel, so deploys to `main` update the app without reinstalling unless native plugins or Capacitor config changed.
+          files: |
+            marasim-prod-latest.apk
+            marasim-prod-${{ github.sha }}.apk
+          make_latest: true
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
