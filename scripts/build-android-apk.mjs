@@ -32,6 +32,11 @@ const gradle = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
 const androidDir = path.join(root, "android");
 
 console.log(`Using JAVA_HOME=${javaHome}`);
+
+if (process.platform !== "win32") {
+  execSync("chmod +x gradlew", { cwd: androidDir, stdio: "inherit" });
+}
+
 execSync(`${gradle} assembleDebug`, { cwd: androidDir, stdio: "inherit", env });
 
 const apkPath = path.join(androidDir, "app", "build", "outputs", "apk", "debug", "app-debug.apk");
